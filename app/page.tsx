@@ -46,11 +46,11 @@ const getBoxColor = (value: number) => {
     // Hue: stays at green (120°)
     hue = 120;
     
-    // Saturation: 0% (white) to 60% (green)
-    saturation = Math.round(60 * intensity);
+    // Saturation: 0% (white) to 80% (bright green)
+    saturation = Math.round(80 * intensity);
     
-    // Lightness: 100% (white) to 50% (green)
-    lightness = Math.round(100 - (50 * intensity));
+    // Lightness: 100% (white) to 60% (bright green, not dark)
+    lightness = Math.round(100 - (40 * intensity));
     
   } else {
     // Second half: Green to Blue (0.5 to 1)
@@ -59,11 +59,11 @@ const getBoxColor = (value: number) => {
     // Hue: 120° (green) to 240° (blue)
     hue = Math.round(120 + (120 * intensity));
     
-    // Saturation: stays at 60% (rich colors)
-    saturation = 60;
+    // Saturation: stays at 80% (rich, vibrant colors)
+    saturation = 80;
     
-    // Lightness: 50% (green) to 60% (nice blue, not dark)
-    lightness = Math.round(50 + (10 * intensity));
+    // Lightness: 60% (bright green) to 65% (bright blue)
+    lightness = Math.round(60 + (5 * intensity));
   }
   
   return {
@@ -76,10 +76,24 @@ export default function Home() {
   const [selectedBoxIndex, setSelectedBoxIndex] = useState<number>(0);
   const [redBoxIndices, setRedBoxIndices] = useState<number[]>([]);
   const [visualizationMode, setVisualizationMode] = useState<'random' | 'ordered'>('random');
+  const [isSegmented, setIsSegmented] = useState<boolean>(false);
+  const [boxGroups, setBoxGroups] = useState<number[][]>([
+    [], [], [] // Initialize with three empty groups
+  ]);
 
   useEffect(() => {
     setNumbers(generateNumbers());
     setRedBoxIndices(generateRedBoxIndices());
+    
+    // Generate random groups for segmented view
+    const indices = Array.from({ length: 400 }, (_, i) => i);
+    const shuffled = [...indices].sort(() => Math.random() - 0.5);
+    const groups = [
+      shuffled.slice(0, 133),      // Group 1: ~133 boxes
+      shuffled.slice(133, 266),    // Group 2: ~133 boxes  
+      shuffled.slice(266, 400)     // Group 3: ~134 boxes
+    ];
+    setBoxGroups(groups);
     
     // Set random selected box index (0 to 399), but not a red box
     let randomIndex;
@@ -114,39 +128,120 @@ export default function Home() {
     });
   };
 
+  // Create segmented visualization with optional ordering within groups
+  const getSegmentedVisualization = () => {
+    // Safety check: ensure we have groups and numbers
+    if (boxGroups.length === 0 || numbers.length === 0) {
+      return [[], [], []];
+    }
+
+    return boxGroups.map((group, groupIndex) => {
+      const groupBoxes = group.map(index => ({
+        value: numbers[index] || 0,
+        index,
+        isRed: redBoxIndices.includes(index)
+      }));
+
+      // If ordered mode is enabled, sort within each group
+      if (visualizationMode === 'ordered') {
+        return groupBoxes.sort((a, b) => {
+          if (a.isRed && !b.isRed) return -1;
+          if (!a.isRed && b.isRed) return 1;
+          if (a.isRed && b.isRed) return 0;
+          return a.value - b.value;
+        });
+      }
+
+      return groupBoxes;
+    });
+  };
+
   const toggleVisualizationMode = () => {
     setVisualizationMode(prev => prev === 'random' ? 'ordered' : 'random');
+  };
+
+  const toggleSegmentedView = () => {
+    setIsSegmented(prev => !prev);
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Grid Container */}
       <div className="w-full h-[calc(100vh-5rem)] overflow-hidden">
-        <div 
-          className="grid h-full w-full"
-          style={{
-            gridTemplateColumns: 'repeat(20, 1fr)',
-            gridTemplateRows: 'repeat(20, 1fr)'
-          }}
-        >
-          {(visualizationMode === 'ordered' ? getOrderedVisualization() : numbers.map((value, index) => ({ value, index, isRed: redBoxIndices.includes(index) }))).map((box, displayIndex) => {
-            const { value: number, index, isRed: isRedBox } = box;
-            const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
-            
-            return (
-              <div
-                key={visualizationMode === 'ordered' ? `ordered-${displayIndex}` : index}
-                className={`
-                  ${selectedBoxIndex === index ? 'border-4 border-yellow-400' : ''}
-                  ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
-                  transition-all duration-200
-                `}
-                style={colorStyle}
-                title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : number.toLocaleString()}`}
-              />
-            );
-          })}
-        </div>
+        {isSegmented ? (
+          // Segmented View with three groups
+          <div className="h-full w-full flex flex-col bg-gray-200">
+            {getSegmentedVisualization().map((group, groupIndex) => (
+              <div key={groupIndex} className="flex-1 flex flex-col relative">
+                {/* Floating Group Label Badge */}
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-full shadow-sm">
+                    Group {groupIndex + 1}
+                  </div>
+                </div>
+                {/* Group Grid */}
+                <div className="flex-1">
+                  <div 
+                    className="grid h-full w-full"
+                    style={{
+                      gridTemplateColumns: 'repeat(20, 1fr)',
+                      gridTemplateRows: group.length > 0 ? `repeat(${Math.ceil(group.length / 20)}, 1fr)` : 'repeat(1, 1fr)'
+                    }}
+                  >
+                    {group.length > 0 ? group.map((box, displayIndex) => {
+                      const { value: number, index, isRed: isRedBox } = box;
+                      const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
+                      
+                      return (
+                        <div
+                          key={`group-${groupIndex}-${displayIndex}`}
+                          className={`
+                            ${selectedBoxIndex === index ? 'border-2 border-yellow-400' : ''}
+                            ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
+                            transition-all duration-200
+                          `}
+                          style={colorStyle}
+                          title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : number.toLocaleString()}`}
+                        />
+                      );
+                    }) : (
+                      <div className="col-span-full flex items-center justify-center text-gray-400 text-sm">
+                        Loading...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Regular Grid View
+          <div 
+            className="grid h-full w-full"
+            style={{
+              gridTemplateColumns: 'repeat(20, 1fr)',
+              gridTemplateRows: 'repeat(20, 1fr)'
+            }}
+          >
+            {(visualizationMode === 'ordered' ? getOrderedVisualization() : numbers.map((value, index) => ({ value, index, isRed: redBoxIndices.includes(index) }))).map((box, displayIndex) => {
+              const { value: number, index, isRed: isRedBox } = box;
+              const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
+              
+              return (
+                <div
+                  key={visualizationMode === 'ordered' ? `ordered-${displayIndex}` : index}
+                  className={`
+                    ${selectedBoxIndex === index ? 'border-4 border-yellow-400' : ''}
+                    ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
+                    transition-all duration-200
+                  `}
+                  style={colorStyle}
+                  title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : number.toLocaleString()}`}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Bottom Toolbar */}
@@ -172,6 +267,16 @@ export default function Home() {
               className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
               {visualizationMode === 'random' ? 'Random' : 'Ordered'} View
+            </button>
+            <button 
+              onClick={toggleSegmentedView}
+              className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                isSegmented 
+                  ? 'text-white bg-blue-600 hover:bg-blue-700' 
+                  : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+              }`}
+            >
+              {isSegmented ? 'Segmented' : 'Grid'} View
             </button>
             <Drawer>
               <DrawerTrigger asChild>
