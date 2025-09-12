@@ -75,6 +75,7 @@ export default function Home() {
   const [numbers, setNumbers] = useState<number[]>([]);
   const [selectedBoxIndex, setSelectedBoxIndex] = useState<number>(0);
   const [redBoxIndices, setRedBoxIndices] = useState<number[]>([]);
+  const [visualizationMode, setVisualizationMode] = useState<'random' | 'ordered'>('random');
 
   useEffect(() => {
     setNumbers(generateNumbers());
@@ -96,6 +97,27 @@ export default function Home() {
     setNumbers(newNumbers);
   };
 
+  // Create ordered visualization: red boxes first, then sorted by value
+  const getOrderedVisualization = () => {
+    const boxes = numbers.map((value, index) => ({
+      value,
+      index,
+      isRed: redBoxIndices.includes(index)
+    }));
+
+    // Sort: red boxes first, then by value (ascending)
+    return boxes.sort((a, b) => {
+      if (a.isRed && !b.isRed) return -1;
+      if (!a.isRed && b.isRed) return 1;
+      if (a.isRed && b.isRed) return 0;
+      return a.value - b.value;
+    });
+  };
+
+  const toggleVisualizationMode = () => {
+    setVisualizationMode(prev => prev === 'random' ? 'ordered' : 'random');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Grid Container */}
@@ -107,13 +129,13 @@ export default function Home() {
             gridTemplateRows: 'repeat(20, 1fr)'
           }}
         >
-          {numbers.map((number, index) => {
-            const isRedBox = redBoxIndices.includes(index);
+          {(visualizationMode === 'ordered' ? getOrderedVisualization() : numbers.map((value, index) => ({ value, index, isRed: redBoxIndices.includes(index) }))).map((box, displayIndex) => {
+            const { value: number, index, isRed: isRedBox } = box;
             const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
             
             return (
               <div
-                key={index}
+                key={visualizationMode === 'ordered' ? `ordered-${displayIndex}` : index}
                 className={`
                   ${selectedBoxIndex === index ? 'border-4 border-yellow-400' : ''}
                   ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
@@ -145,8 +167,11 @@ export default function Home() {
 
           {/* Right side - Visualization options */}
           <div className="flex items-center space-x-2">
-            <button className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-              Visualization
+            <button 
+              onClick={toggleVisualizationMode}
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              {visualizationMode === 'random' ? 'Random' : 'Ordered'} View
             </button>
             <Drawer>
               <DrawerTrigger asChild>
