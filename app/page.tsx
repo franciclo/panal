@@ -15,6 +15,18 @@ const generateNumbers = () => {
   });
 };
 
+// Generate random red box indices (approximately 80 red boxes)
+const generateRedBoxIndices = () => {
+  const redBoxIndices = new Set<number>();
+  const targetCount = 80;
+  
+  while (redBoxIndices.size < targetCount) {
+    redBoxIndices.add(Math.floor(Math.random() * 400));
+  }
+  
+  return Array.from(redBoxIndices);
+};
+
 // Calculate HSL color based on value - smooth transition from white to green to blue
 const getBoxColor = (value: number) => {
   const minValue = 100000;  // Minimum slider value = white
@@ -61,24 +73,27 @@ const getBoxColor = (value: number) => {
 
 export default function Home() {
   const [numbers, setNumbers] = useState<number[]>([]);
-  const [selectedBoxIndex, setSelectedBoxIndex] = useState<number | null>(null);
+  const [selectedBoxIndex, setSelectedBoxIndex] = useState<number>(0);
+  const [redBoxIndices, setRedBoxIndices] = useState<number[]>([]);
 
   useEffect(() => {
     setNumbers(generateNumbers());
+    setRedBoxIndices(generateRedBoxIndices());
+    
+    // Set random selected box index (0 to 399), but not a red box
+    let randomIndex;
+    do {
+      randomIndex = Math.floor(Math.random() * 400);
+    } while (redBoxIndices.includes(randomIndex));
+    setSelectedBoxIndex(randomIndex);
   }, []);
 
   const totalSum = numbers.reduce((sum, num) => sum + num, 0);
 
-  const handleBoxClick = (index: number) => {
-    setSelectedBoxIndex(index);
-  };
-
   const handleValueChange = (newValue: number) => {
-    if (selectedBoxIndex !== null) {
-      const newNumbers = [...numbers];
-      newNumbers[selectedBoxIndex] = newValue;
-      setNumbers(newNumbers);
-    }
+    const newNumbers = [...numbers];
+    newNumbers[selectedBoxIndex] = newValue;
+    setNumbers(newNumbers);
   };
 
   return (
@@ -93,17 +108,19 @@ export default function Home() {
           }}
         >
           {numbers.map((number, index) => {
-            const colorStyle = getBoxColor(number);
+            const isRedBox = redBoxIndices.includes(index);
+            const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
+            
             return (
               <div
                 key={index}
                 className={`
-                  ${selectedBoxIndex === index ? 'ring-2 ring-black ring-opacity-50' : ''}
-                  transition-all duration-200 hover:scale-105 cursor-pointer
+                  ${selectedBoxIndex === index ? 'border-4 border-yellow-400' : ''}
+                  ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
+                  transition-all duration-200
                 `}
                 style={colorStyle}
-                onClick={() => handleBoxClick(index)}
-                title={`Box ${index + 1}: ${number.toLocaleString()}`}
+                title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : number.toLocaleString()}`}
               />
             );
           })}
@@ -119,33 +136,27 @@ export default function Home() {
         </DrawerTrigger>
         <DrawerContent className="bg-white text-gray-900">
           <DrawerTitle className="text-gray-900">
-            {selectedBoxIndex !== null ? `Box ${selectedBoxIndex + 1}` : 'Select a Box'}
+            Box {selectedBoxIndex + 1}
           </DrawerTitle>
           <div className="p-4">
-            {selectedBoxIndex !== null ? (
-              <div className="text-center mb-4">
-                <div className="text-4xl font-bold mb-2 text-gray-900">
-                  {numbers[selectedBoxIndex].toLocaleString()}
-                </div>
-                <input
-                  type="range"
-                  min="100000"
-                  max="1000000"
-                  step="10000"
-                  value={numbers[selectedBoxIndex]}
-                  onChange={(e) => handleValueChange(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>100K</span>
-                  <span>1M</span>
-                </div>
+            <div className="text-center mb-4">
+              <div className="text-4xl font-bold mb-2 text-gray-900">
+                {numbers[selectedBoxIndex]?.toLocaleString() || '0'}
               </div>
-            ) : (
-              <div className="text-center text-gray-500">
-                Click on a box to edit its value
+              <input
+                type="range"
+                min="100000"
+                max="1000000"
+                step="10000"
+                value={numbers[selectedBoxIndex] || 500000}
+                onChange={(e) => handleValueChange(Number(e.target.value))}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>100K</span>
+                <span>1M</span>
               </div>
-            )}
+            </div>
           </div>
         </DrawerContent>
       </Drawer>
