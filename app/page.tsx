@@ -127,39 +127,62 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Bottom Drawer */}
-      <Drawer>
-        <DrawerTrigger asChild>
-          <div className="bg-white border-t border-gray-300 h-16 flex items-center justify-center cursor-pointer hover:bg-gray-50">
-            <span className="text-2xl font-bold">{totalSum.toLocaleString()}</span>
-          </div>
-        </DrawerTrigger>
-        <DrawerContent className="bg-white text-gray-900">
-          <DrawerTitle className="text-gray-900">
-            Box {selectedBoxIndex + 1}
-          </DrawerTitle>
-          <div className="p-4">
-            <div className="text-center mb-4">
-              <div className="text-4xl font-bold mb-2 text-gray-900">
-                {numbers[selectedBoxIndex]?.toLocaleString() || '0'}
-              </div>
-              <input
-                type="range"
-                min="100000"
-                max="1000000"
-                step="10000"
-                value={numbers[selectedBoxIndex] || 500000}
-                onChange={(e) => handleValueChange(Number(e.target.value))}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>100K</span>
-                <span>1M</span>
-              </div>
+      {/* Bottom Toolbar */}
+      <div className="bg-white border-t border-gray-200 shadow-lg">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Left side - Sum display */}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Total Sum</div>
+              <div className="text-xl font-bold text-gray-900">{totalSum.toLocaleString()}</div>
             </div>
           </div>
-        </DrawerContent>
-      </Drawer>
+
+          {/* Right side - Visualization options */}
+          <div className="flex items-center space-x-2">
+            <button className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+              Visualization
+            </button>
+            <Drawer>
+              <DrawerTrigger asChild>
+                <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                  Edit Box
+                </button>
+              </DrawerTrigger>
+              <DrawerContent className="bg-white text-gray-900">
+                <DrawerTitle className="text-gray-900">
+                  Box {selectedBoxIndex + 1}
+                </DrawerTitle>
+                <div className="p-4">
+                  <div className="text-center mb-4">
+                    <div className="text-4xl font-bold mb-2 text-gray-900">
+                      {numbers[selectedBoxIndex]?.toLocaleString() || '0'}
+                    </div>
+                    <input
+                      type="range"
+                      min="100000"
+                      max="1000000"
+                      step="10000"
+                      value={numbers[selectedBoxIndex] || 500000}
+                      onChange={(e) => handleValueChange(Number(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>100K</span>
+                      <span>1M</span>
+                    </div>
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
