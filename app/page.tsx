@@ -39,15 +39,18 @@ interface HexagonProps {
 
 function Hexagon({ color, x, y, size, isSelected, onClick }: HexagonProps) {
   const points = useMemo(() => {
-    const angles = [0, 60, 120, 180, 240, 300];
-    return angles
-      .map((angle) => {
-        const radian = (angle * Math.PI) / 180;
-        const px = x + size * Math.cos(radian);
-        const py = y + size * Math.sin(radian);
-        return `${px},${py}`;
-      })
-      .join(" ");
+    // Pointy-top hexagon: points at left/right, flat sides at top/bottom
+    const sqrt3_2 = size * Math.sqrt(3) / 2;
+    const halfSize = size / 2;
+    
+    return [
+      `${x + size},${y}`,                    // Right point
+      `${x + halfSize},${y - sqrt3_2}`,      // Top right
+      `${x - halfSize},${y - sqrt3_2}`,      // Top left
+      `${x - size},${y}`,                    // Left point
+      `${x - halfSize},${y + sqrt3_2}`,      // Bottom left
+      `${x + halfSize},${y + sqrt3_2}`       // Bottom right
+    ].join(" ");
   }, [x, y, size]);
 
   return (
@@ -110,6 +113,7 @@ export default function Home() {
   const [numbers, setNumbers] = useState<number[]>([]);
   const [selectedBoxIndex, setSelectedBoxIndex] = useState<number>(0);
   const [redBoxIndices, setRedBoxIndices] = useState<number[]>([]);
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
 
   useEffect(() => {
     setNumbers(generateNumbers());
@@ -121,41 +125,74 @@ export default function Home() {
       randomIndex = Math.floor(Math.random() * 400);
     } while (redBoxIndices.includes(randomIndex));
     setSelectedBoxIndex(randomIndex);
+
+    // Set initial dimensions
+    setDimensions({ width: window.innerWidth, height: window.innerHeight });
+
+    // Handle resize
+    const handleResize = () => {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const totalSum = numbers.reduce((sum, num) => sum + num, 0);
 
-  // Generate hexagonal grid data using cube coordinates
+  // Generate hexagonal grid with mathematical precision
   const hexagons = useMemo(() => {
-    const hexSize = 15;
-    const hexagons: Array<{ id: number; color: string; x: number; y: number }> = [];
-
-    const radius = 11; // Number of hexagons from center to edge
-    const centerX = radius * hexSize * 1.5;
-    const centerY = radius * hexSize * Math.sqrt(3);
+    const hexSize = Math.max(8, Math.min(20, Math.min(dimensions.width, dimensions.height) / 50));
+    const centerX = dimensions.width / 2;
+    const centerY = dimensions.height / 2;
+    const dataRadius = 11;
+    
+    // Mathematical constants for pointy-top hexagonal tessellation
+    const HEX_WIDTH = hexSize * 1.5;
+    const HEX_HEIGHT = hexSize * Math.sqrt(3);
+    
+    const hexagons: Array<{ id: number; color: string; x: number; y: number; hasData: boolean; dataIndex: number }> = [];
     let id = 0;
+    let dataId = 0;
 
-    for (let q = -radius; q <= radius && id < 400; q++) {
-      const r1 = Math.max(-radius, -q - radius);
-      const r2 = Math.min(radius, -q + radius);
+    // Calculate extended coverage radius for infinite-looking background
+    const viewportRadius = Math.max(
+      Math.ceil(dimensions.width / HEX_WIDTH) + 8,  // Extended beyond viewport
+      Math.ceil(dimensions.height / HEX_HEIGHT) + 8, // Extended beyond viewport
+      dataRadius
+    );
 
-      for (let r = r1; r <= r2 && id < 400; r++) {
+    // Generate all hexagons using cube coordinate system
+    for (let q = -viewportRadius; q <= viewportRadius; q++) {
+      const r1 = Math.max(-viewportRadius, -q - viewportRadius);
+      const r2 = Math.min(viewportRadius, -q + viewportRadius);
+
+      for (let r = r1; r <= r2; r++) {
         // Convert cube coordinates to pixel coordinates
-        const x = centerX + hexSize * 1.5 * q;
-        const y = centerY + hexSize * Math.sqrt(3) * (r + q / 2);
+        const x = centerX + HEX_WIDTH * q;
+        const y = centerY + HEX_HEIGHT * (r + q / 2);
 
-        const number = numbers[id] || 500000;
-        const isRedBox = redBoxIndices.includes(id);
-        const isEmptyBox = id >= numbers.length;
-        
+        // Check if this hexagon should have data
+        const hexDistance = (Math.abs(q) + Math.abs(r) + Math.abs(-q - r)) / 2;
+        const hasData = hexDistance <= dataRadius && dataId < 400;
+
+        // Determine color
         let color: string;
-        if (isRedBox) {
-          color = 'hsl(0, 70%, 50%)';
-        } else if (isEmptyBox) {
-          color = 'hsl(0, 0%, 95%)';
+        if (hasData) {
+          const number = numbers[dataId] || 500000;
+          const isRedBox = redBoxIndices.includes(dataId);
+          const isEmptyBox = dataId >= numbers.length;
+          
+          if (isRedBox) {
+            color = 'hsl(0, 70%, 50%)';
+          } else if (isEmptyBox) {
+            color = 'hsl(0, 0%, 95%)';
+          } else {
+            color = getBoxColor(number).backgroundColor;
+          }
+          dataId++;
         } else {
-          const colorData = getBoxColor(number);
-          color = colorData.backgroundColor;
+          color = 'hsl(0, 0%, 98%)'; // Subtle background
         }
 
         hexagons.push({
@@ -163,20 +200,23 @@ export default function Home() {
           color,
           x,
           y,
+          hasData,
+          dataIndex: hasData ? dataId - 1 : -1,
         });
         id++;
       }
     }
 
-    return hexagons.slice(0, 400);
-  }, [numbers, redBoxIndices]);
+    return hexagons;
+  }, [numbers, redBoxIndices, dimensions]);
 
-  // Calculate SVG dimensions with padding
-  const padding = 50;
-  const maxX = Math.max(...hexagons.map((h) => h.x)) + padding;
-  const maxY = Math.max(...hexagons.map((h) => h.y)) + padding;
-  const minX = Math.min(...hexagons.map((h) => h.x)) - padding;
-  const minY = Math.min(...hexagons.map((h) => h.y)) - padding;
+  // Calculate SVG dimensions and hex size with extended padding for infinite background
+  const padding = 200; // Increased padding to accommodate extended grid
+  const maxX = dimensions.width + padding;
+  const maxY = dimensions.height + padding;
+  const minX = -padding;
+  const minY = -padding;
+  const hexSize = Math.max(8, Math.min(20, Math.min(dimensions.width, dimensions.height) / 50));
 
   const handleValueChange = (newValue: number) => {
     const newNumbers = [...numbers];
@@ -227,69 +267,66 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
-      {/* Stats Section */}
-      <div className="bg-gray-100 px-3 sm:px-4 py-3 flex-shrink-0">
-        <div className="flex justify-center">
-          {(() => {
-            const stats = calculateStats();
+    <div className="h-screen w-screen bg-gray-100 relative overflow-hidden">
+      {/* Full Page Hexagonal Grid - covers entire viewport */}
+      <div className="absolute inset-0">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`}
+          className="w-full h-full"
+        >
+          {hexagons.map((hexagon) => {
+            const dataIndex = hexagon.dataIndex;
+            const isClickable = hexagon.hasData && 
+              !redBoxIndices.includes(dataIndex) && 
+              dataIndex < numbers.length;
+            
             return (
-              <div className="bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200 flex items-center space-x-6 sm:space-x-8">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full"></div>
-                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.redBoxes.formatted}</div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full"></div>
-                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.surplus.formatted}</div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-300 rounded-full border border-green-400"></div>
-                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.charity.formatted}</div>
-                </div>
-              </div>
+              <Hexagon
+                key={hexagon.id}
+                color={hexagon.color}
+                x={hexagon.x}
+                y={hexagon.y}
+                size={hexSize}
+                isSelected={selectedBoxIndex === dataIndex}
+                onClick={() => {
+                  if (isClickable) {
+                    setSelectedBoxIndex(dataIndex);
+                  }
+                }}
+              />
             );
-          })()}
-        </div>
+          })}
+        </svg>
       </div>
 
-      {/* Hexagonal Grid Container */}
-      <div className="flex-1 flex justify-center items-center p-3 sm:p-4 lg:p-6 min-h-0">
-        <div className="w-full max-w-4xl mx-auto">
-          <svg
-            width={maxX - minX}
-            height={maxY - minY}
-            viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`}
-            className="w-full h-auto"
-          >
-            {hexagons.map((hexagon) => {
-              const isRedBox = redBoxIndices.includes(hexagon.id);
-              const isEmptyBox = hexagon.id >= numbers.length;
-              const isClickable = !isRedBox && !isEmptyBox;
-              
-              return (
-                <Hexagon
-                  key={hexagon.id}
-                  color={hexagon.color}
-                  x={hexagon.x}
-                  y={hexagon.y}
-                  size={15}
-                  isSelected={selectedBoxIndex === hexagon.id}
-                  onClick={() => {
-                    if (isClickable) {
-                      setSelectedBoxIndex(hexagon.id);
-                    }
-                  }}
-                />
-              );
-            })}
-          </svg>
-        </div>
+      {/* Stats Section - Absolute positioned at top */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
+        {(() => {
+          const stats = calculateStats();
+          return (
+            <div className="bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border border-gray-200 flex items-center space-x-6 sm:space-x-8">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full"></div>
+                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.redBoxes.formatted}</div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full"></div>
+                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.surplus.formatted}</div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-300 rounded-full border border-green-400"></div>
+                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.charity.formatted}</div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
-      {/* Bottom Toolbar */}
-      <div className="bg-white border-t border-gray-200 shadow-lg flex-shrink-0">
-        <div className="px-3 sm:px-4 py-3">
+      {/* Bottom Toolbar - Absolute positioned at bottom */}
+      <div className="absolute bottom-4 left-4 right-4 z-10">
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-lg px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Left - Total */}
             <div className="flex items-center space-x-2 sm:space-x-3">
@@ -342,7 +379,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }
