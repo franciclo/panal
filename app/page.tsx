@@ -75,25 +75,10 @@ export default function Home() {
   const [numbers, setNumbers] = useState<number[]>([]);
   const [selectedBoxIndex, setSelectedBoxIndex] = useState<number>(0);
   const [redBoxIndices, setRedBoxIndices] = useState<number[]>([]);
-  const [visualizationMode, setVisualizationMode] = useState<'random' | 'ordered'>('random');
-  const [isSegmented, setIsSegmented] = useState<boolean>(false);
-  const [boxGroups, setBoxGroups] = useState<number[][]>([
-    [], [], [] // Initialize with three empty groups
-  ]);
 
   useEffect(() => {
     setNumbers(generateNumbers());
     setRedBoxIndices(generateRedBoxIndices());
-    
-    // Generate random groups for segmented view
-    const indices = Array.from({ length: 400 }, (_, i) => i);
-    const shuffled = [...indices].sort(() => Math.random() - 0.5);
-    const groups = [
-      shuffled.slice(0, 133),      // Group 1: ~133 boxes
-      shuffled.slice(133, 266),    // Group 2: ~133 boxes  
-      shuffled.slice(266, 400)     // Group 3: ~134 boxes
-    ];
-    setBoxGroups(groups);
     
     // Set random selected box index (0 to 399), but not a red box
     let randomIndex;
@@ -111,177 +96,139 @@ export default function Home() {
     setNumbers(newNumbers);
   };
 
-  // Create ordered visualization: red boxes first, then sorted by value
-  const getOrderedVisualization = () => {
-    const boxes = numbers.map((value, index) => ({
-      value,
-      index,
-      isRed: redBoxIndices.includes(index)
-    }));
 
-    // Sort: red boxes first, then by value (ascending)
-    return boxes.sort((a, b) => {
-      if (a.isRed && !b.isRed) return -1;
-      if (!a.isRed && b.isRed) return 1;
-      if (a.isRed && b.isRed) return 0;
-      return a.value - b.value;
-    });
-  };
-
-  // Create segmented visualization with optional ordering within groups
-  const getSegmentedVisualization = () => {
-    // Safety check: ensure we have groups and numbers
-    if (boxGroups.length === 0 || numbers.length === 0) {
-      return [[], [], []];
+  // Format numbers in abbreviated form (e.g., 40M instead of 40,000,000)
+  const formatAbbreviated = (num: number) => {
+    if (num >= 1000000000) {
+      return (num / 1000000000).toFixed(1) + 'B';
+    } else if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
     }
+    return num.toString();
+  };
 
-    return boxGroups.map((group, groupIndex) => {
-      const groupBoxes = group.map(index => ({
-        value: numbers[index] || 0,
-        index,
-        isRed: redBoxIndices.includes(index)
-      }));
+  // Calculate statistics for different box categories
+  const calculateStats = () => {
+    const redBoxes = numbers.filter((_, index) => redBoxIndices.includes(index));
+    const over500kBoxes = numbers.filter((value, index) => !redBoxIndices.includes(index) && value > 500000);
+    const under500kBoxes = numbers.filter((value, index) => !redBoxIndices.includes(index) && value < 500000);
 
-      // If ordered mode is enabled, sort within each group
-      if (visualizationMode === 'ordered') {
-        return groupBoxes.sort((a, b) => {
-          if (a.isRed && !b.isRed) return -1;
-          if (!a.isRed && b.isRed) return 1;
-          if (a.isRed && b.isRed) return 0;
-          return a.value - b.value;
-        });
+    const redBoxSum = redBoxes.reduce((sum, value) => sum + value, 0);
+    const surplusSum = over500kBoxes.reduce((sum, value) => sum + (value - 500000), 0);
+    const charitySum = under500kBoxes.reduce((sum, value) => sum + (500000 - value), 0);
+
+    return {
+      redBoxes: {
+        sum: redBoxSum,
+        count: redBoxes.length,
+        formatted: formatAbbreviated(redBoxSum)
+      },
+      surplus: {
+        sum: surplusSum,
+        count: over500kBoxes.length,
+        formatted: '+' + formatAbbreviated(surplusSum)
+      },
+      charity: {
+        sum: charitySum,
+        count: under500kBoxes.length,
+        formatted: '-' + formatAbbreviated(charitySum)
       }
-
-      return groupBoxes;
-    });
-  };
-
-  const toggleVisualizationMode = () => {
-    setVisualizationMode(prev => prev === 'random' ? 'ordered' : 'random');
-  };
-
-  const toggleSegmentedView = () => {
-    setIsSegmented(prev => !prev);
+    };
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Grid Container */}
-      <div className="w-full h-[calc(100vh-5rem)] overflow-hidden">
-        {isSegmented ? (
-          // Segmented View with three groups
-          <div className="h-full w-full flex flex-col bg-gray-200">
-            {getSegmentedVisualization().map((group, groupIndex) => (
-              <div key={groupIndex} className="flex-1 flex flex-col relative">
-                {/* Floating Group Label Badge */}
-                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10">
-                  <div className="bg-blue-600 text-white px-3 py-1 text-xs font-medium rounded-full shadow-sm">
-                    Group {groupIndex + 1}
-                  </div>
-                </div>
-                {/* Group Grid */}
-                <div className="flex-1">
-                  <div 
-                    className="grid h-full w-full"
-                    style={{
-                      gridTemplateColumns: 'repeat(20, 1fr)',
-                      gridTemplateRows: group.length > 0 ? `repeat(${Math.ceil(group.length / 20)}, 1fr)` : 'repeat(1, 1fr)'
-                    }}
-                  >
-                    {group.length > 0 ? group.map((box, displayIndex) => {
-                      const { value: number, index, isRed: isRedBox } = box;
-                      const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
-                      
-                      return (
-                        <div
-                          key={`group-${groupIndex}-${displayIndex}`}
-                          className={`
-                            ${selectedBoxIndex === index ? 'border-2 border-yellow-400' : ''}
-                            ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
-                            transition-all duration-200
-                          `}
-                          style={colorStyle}
-                          title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : number.toLocaleString()}`}
-                        />
-                      );
-                    }) : (
-                      <div className="col-span-full flex items-center justify-center text-gray-400 text-sm">
-                        Loading...
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          // Regular Grid View
-          <div 
-            className="grid h-full w-full"
-            style={{
-              gridTemplateColumns: 'repeat(20, 1fr)',
-              gridTemplateRows: 'repeat(20, 1fr)'
-            }}
-          >
-            {(visualizationMode === 'ordered' ? getOrderedVisualization() : numbers.map((value, index) => ({ value, index, isRed: redBoxIndices.includes(index) }))).map((box, displayIndex) => {
-              const { value: number, index, isRed: isRedBox } = box;
-              const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
-              
+      {/* Stats Section */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="px-3 sm:px-4 py-3">
+          <div className="flex items-center justify-center space-x-4 sm:space-x-6 lg:space-x-8">
+            {(() => {
+              const stats = calculateStats();
               return (
-                <div
-                  key={visualizationMode === 'ordered' ? `ordered-${displayIndex}` : index}
-                  className={`
-                    ${selectedBoxIndex === index ? 'border-4 border-yellow-400' : ''}
-                    ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
-                    transition-all duration-200
-                  `}
-                  style={colorStyle}
-                  title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : number.toLocaleString()}`}
-                />
+                <>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full"></div>
+                    <div className="text-center">
+                      <div className="text-sm sm:text-base font-bold text-gray-900">{stats.redBoxes.formatted}</div>
+                      <div className="text-xs text-gray-500">Red</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full"></div>
+                    <div className="text-center">
+                      <div className="text-sm sm:text-base font-bold text-gray-900">{stats.surplus.formatted}</div>
+                      <div className="text-xs text-gray-500">Surplus</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-300 rounded-full border border-green-400"></div>
+                    <div className="text-center">
+                      <div className="text-sm sm:text-base font-bold text-gray-900">{stats.charity.formatted}</div>
+                      <div className="text-xs text-gray-500">Charity</div>
+                    </div>
+                  </div>
+                </>
               );
-            })}
+            })()}
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* Grid Container */}
+      <div className="w-full h-[calc(100vh-9rem)] overflow-hidden">
+        <div 
+          className="grid h-full w-full"
+          style={{
+            gridTemplateColumns: 'repeat(20, 1fr)',
+            gridTemplateRows: 'repeat(20, 1fr)'
+          }}
+        >
+          {numbers.map((number, index) => {
+            const isRedBox = redBoxIndices.includes(index);
+            const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
+            
+            return (
+              <div
+                key={index}
+                className={`
+                  ${selectedBoxIndex === index ? 'border-4 border-yellow-400' : ''}
+                  ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
+                  transition-all duration-200
+                `}
+                style={colorStyle}
+                title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : number.toLocaleString()}`}
+              />
+            );
+          })}
+        </div>
       </div>
 
       {/* Bottom Toolbar */}
       <div className="bg-white border-t border-gray-200 shadow-lg">
-        <div className="flex items-center justify-between px-4 py-3">
-          {/* Left side - Sum display */}
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
+        <div className="px-3 sm:px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Left - Total */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-xs sm:text-sm text-gray-500">Total</div>
+                <div className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
+                  {formatAbbreviated(totalSum)}
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="text-sm text-gray-500">Total Sum</div>
-              <div className="text-xl font-bold text-gray-900">{totalSum.toLocaleString()}</div>
-            </div>
-          </div>
 
-          {/* Right side - Visualization options */}
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={toggleVisualizationMode}
-              className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              {visualizationMode === 'random' ? 'Random' : 'Ordered'} View
-            </button>
-            <button 
-              onClick={toggleSegmentedView}
-              className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                isSegmented 
-                  ? 'text-white bg-blue-600 hover:bg-blue-700' 
-                  : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-              }`}
-            >
-              {isSegmented ? 'Segmented' : 'Grid'} View
-            </button>
+            {/* Right - Selected Box */}
             <Drawer>
               <DrawerTrigger asChild>
-                <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                  Edit Box
+                <button className="px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold text-blue-600 bg-white border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                  {formatAbbreviated(numbers[selectedBoxIndex] || 0)}
                 </button>
               </DrawerTrigger>
               <DrawerContent className="bg-white text-gray-900">
@@ -313,6 +260,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
