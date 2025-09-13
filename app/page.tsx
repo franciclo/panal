@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 
 // Constants
@@ -20,6 +20,35 @@ const COLORS = {
   backgroundBorder: 'hsl(0, 0%, 95%)',
   empty: 'hsl(0, 0%, 95%)'
 } as const;
+
+// Helper to draw a hexagon on canvas
+function drawHexagon(
+  ctx: CanvasRenderingContext2D, 
+  x: number, 
+  y: number, 
+  size: number, 
+  color: string, 
+  hasData: boolean
+) {
+  const sqrt3_2 = size * Math.sqrt(3) / 2;
+  const halfSize = size / 2;
+
+  ctx.beginPath();
+  ctx.moveTo(x + size, y);
+  ctx.lineTo(x + halfSize, y - sqrt3_2);
+  ctx.lineTo(x - halfSize, y - sqrt3_2);
+  ctx.lineTo(x - size, y);
+  ctx.lineTo(x - halfSize, y + sqrt3_2);
+  ctx.lineTo(x + halfSize, y + sqrt3_2);
+  ctx.closePath();
+
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  ctx.strokeStyle = hasData ? color : COLORS.backgroundBorder;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
 
 // Generate student payments
 const generateAportes = () => {
@@ -41,46 +70,6 @@ const generateMoraIndices = () => {
   }
   return Array.from(indices);
 };
-
-// Hexagon component
-interface HexagonProps {
-  color: string;
-  x: number;
-  y: number;
-  size: number;
-  hasData: boolean;
-  onClick: () => void;
-}
-
-function Hexagon({ color, x, y, size, hasData, onClick }: HexagonProps) {
-  const points = useMemo(() => {
-    const sqrt3_2 = size * Math.sqrt(3) / 2;
-    const halfSize = size / 2;
-    
-    return [
-      `${x + size},${y}`,
-      `${x + halfSize},${y - sqrt3_2}`,
-      `${x - halfSize},${y - sqrt3_2}`,
-      `${x - size},${y}`,
-      `${x - halfSize},${y + sqrt3_2}`,
-      `${x + halfSize},${y + sqrt3_2}`
-    ].join(" ");
-  }, [x, y, size]);
-
-  return (
-    <polygon
-      points={points}
-      fill={color}
-      stroke={hasData ? color : COLORS.backgroundBorder}
-      strokeWidth="1"
-      className="transition-all hover:opacity-80 cursor-pointer"
-      style={{
-        filter: hasData ? 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))' : 'none'
-      }}
-      onClick={onClick}
-    />
-  );
-}
 
 // Color interpolation for payment values
 const getPaymentColor = (value: number) => {
@@ -113,6 +102,8 @@ export default function Home() {
   const [selectedStudentIndex, setSelectedStudentIndex] = useState<number>(0);
   const [moraIndices, setMoraIndices] = useState<number[]>([]);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const hexGridData = useRef<Array<{ x: number; y: number; size: number; dataIndex: number; hasData: boolean }>>([]);
 
   useEffect(() => {
     const aportes = generateAportes();
@@ -143,40 +134,53 @@ export default function Home() {
 
   const presupuestoTotal = aportes.reduce((sum, aporte) => sum + aporte, 0);
 
-  // Generate hexagonal grid
-  const hexagons = useMemo(() => {
-    // Calculate available space between stats pill and bottom toolbar
-    const statsHeight = dimensions.width < 640 ? 50 : 60; // Responsive stats height
-    const toolbarHeight = dimensions.width < 640 ? 60 : 80; // Responsive toolbar height
-    const topPadding = dimensions.width < 640 ? 10 : 20; // Responsive top padding
-    const bottomPadding = dimensions.width < 640 ? 20 : 32; // Responsive bottom padding (increased for proper spacing)
-    const sidePadding = dimensions.width < 640 ? 10 : 20; // Responsive side padding
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Scale canvas for high-DPI displays
+    canvas.width = dimensions.width * window.devicePixelRatio;
+    canvas.height = dimensions.height * window.devicePixelRatio;
+    canvas.style.width = `${dimensions.width}px`;
+    canvas.style.height = `${dimensions.height}px`;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+    // Calculate available space
+    const statsHeight = dimensions.width < 640 ? 50 : 60;
+    const toolbarHeight = dimensions.width < 640 ? 60 : 80;
+    const topPadding = dimensions.width < 640 ? 20 : 40; // Increased padding
+    const bottomPadding = dimensions.width < 640 ? 30 : 52; // Increased padding
+    const sidePadding = dimensions.width < 640 ? 20 : 40; // Increased padding
     
     const availableHeight = dimensions.height - statsHeight - toolbarHeight - topPadding - bottomPadding;
     const availableWidth = dimensions.width - (sidePadding * 2);
     
-    // Calculate hex size based on available space, ensuring it fits within bounds
-    const maxHexSizeByHeight = availableHeight / (DATA_RADIUS * 2 * Math.sqrt(3));
-    const maxHexSizeByWidth = availableWidth / (DATA_RADIUS * 2 * 1.5);
-    const maxHexSize = Math.min(maxHexSizeByHeight, maxHexSizeByWidth);
+    // Calculate the total size of the hexagonal data cluster to determine max hex size
+    // Total height = hexSize * sqrt(3) * (2 * DATA_RADIUS + 1)
+    // Total width = hexSize * (3 * DATA_RADIUS + 2)
+    const clusterHeightFactor = Math.sqrt(3) * (2 * DATA_RADIUS + 1);
+    const clusterWidthFactor = (3 * DATA_RADIUS) + 2;
+
+    const maxHexSizeByHeight = availableHeight / clusterHeightFactor;
+    const maxHexSizeByWidth = availableWidth / clusterWidthFactor;
     
-    const hexSize = Math.max(8, Math.min(35, maxHexSize));
+    const hexSize = Math.max(8, Math.min(35, maxHexSizeByHeight, maxHexSizeByWidth));
     
     const centerX = dimensions.width / 2;
-    const centerY = dimensions.height / 2;
+    // Center the grid within the available vertical space
+    const centerY = statsHeight + topPadding + availableHeight / 2;
     
     const HEX_WIDTH = hexSize * 1.5;
     const HEX_HEIGHT = hexSize * Math.sqrt(3);
-    
-    const hexagons: Array<{ id: number; color: string; x: number; y: number; hasData: boolean; dataIndex: number }> = [];
-    let id = 0;
+
+    ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+    const newHexGridData = [];
     let dataId = 0;
 
-    const viewportRadius = Math.max(
-      Math.ceil(dimensions.width / HEX_WIDTH) + 8,
-      Math.ceil(dimensions.height / HEX_HEIGHT) + 8,
-      DATA_RADIUS
-    );
+    // Calculate loop bounds based on viewport
+    const viewportRadius = Math.ceil(Math.max(dimensions.width / HEX_WIDTH, dimensions.height / HEX_HEIGHT)) + 2;
 
     for (let q = -viewportRadius; q <= viewportRadius; q++) {
       const r1 = Math.max(-viewportRadius, -q - viewportRadius);
@@ -186,65 +190,57 @@ export default function Home() {
         const x = centerX + HEX_WIDTH * q;
         const y = centerY + HEX_HEIGHT * (r + q / 2);
 
+        // Viewport Culling: Skip drawing if hexagon is outside the visible area
+        if (x + hexSize < 0 || x - hexSize > dimensions.width || y + hexSize < 0 || y - hexSize > dimensions.height) {
+          continue;
+        }
+
         const hexDistance = (Math.abs(q) + Math.abs(r) + Math.abs(-q - r)) / 2;
         const hasData = hexDistance <= DATA_RADIUS && dataId < TOTAL_STUDENTS;
 
         let color: string;
         if (hasData) {
-          const aporte = aportes[dataId] || STANDARD_PAYMENT;
           const isEnMora = moraIndices.includes(dataId);
-          
           if (isEnMora) {
             color = COLORS.mora;
-          } else if (dataId >= aportes.length) {
-            color = COLORS.empty;
           } else {
-            color = getPaymentColor(aporte);
+            color = getPaymentColor(aportes[dataId] || STANDARD_PAYMENT);
           }
+          newHexGridData.push({ x, y, size: hexSize, dataIndex: dataId, hasData });
           dataId++;
         } else {
           color = COLORS.background;
         }
 
-        hexagons.push({
-          id,
-          color,
-          x,
-          y,
-          hasData,
-          dataIndex: hasData ? dataId - 1 : -1,
-        });
-        id++;
+        drawHexagon(ctx, x, y, hexSize, color, hasData);
       }
     }
-
-    return hexagons;
+    hexGridData.current = newHexGridData;
   }, [aportes, moraIndices, dimensions]);
 
-  // SVG dimensions - use responsive padding
-  const responsivePadding = Math.max(50, Math.min(200, dimensions.width * 0.1));
-  const svgBounds = {
-    minX: -responsivePadding,
-    minY: -responsivePadding,
-    maxX: dimensions.width + responsivePadding,
-    maxY: dimensions.height + responsivePadding
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    // Find clicked hexagon using simple distance check
+    for (const hex of hexGridData.current) {
+      const distance = Math.sqrt((clickX - hex.x) ** 2 + (clickY - hex.y) ** 2);
+      if (distance < hex.size) {
+        const dataIndex = hex.dataIndex;
+        const isClickable = hex.hasData && 
+                            !moraIndices.includes(dataIndex) && 
+                            dataIndex < aportes.length;
+        if (isClickable) {
+          setSelectedStudentIndex(dataIndex);
+        }
+        return; // Exit after finding the first match
+      }
+    }
   };
-  
-  // Use the same hexSize calculation as in hexagons useMemo
-  const statsHeight = dimensions.width < 640 ? 50 : 60;
-  const toolbarHeight = dimensions.width < 640 ? 60 : 80;
-  const topPadding = dimensions.width < 640 ? 10 : 20;
-  const bottomPadding = dimensions.width < 640 ? 20 : 32;
-  const sidePadding = dimensions.width < 640 ? 10 : 20;
-  
-  const availableHeight = dimensions.height - statsHeight - toolbarHeight - topPadding - bottomPadding;
-  const availableWidth = dimensions.width - (sidePadding * 2);
-  
-  const maxHexSizeByHeight = availableHeight / (DATA_RADIUS * 2 * Math.sqrt(3));
-  const maxHexSizeByWidth = availableWidth / (DATA_RADIUS * 2 * 1.5);
-  const maxHexSize = Math.min(maxHexSizeByHeight, maxHexSizeByWidth);
-  
-  const hexSize = Math.max(8, Math.min(35, maxHexSize));
 
   const handleAporteChange = (newAporte: number) => {
     setAportes(prev => {
@@ -291,37 +287,11 @@ export default function Home() {
   return (
     <div className="h-screen w-screen bg-gray-100 relative overflow-hidden">
       {/* Full Page Hexagonal Grid - covers entire viewport */}
-      <div className="absolute inset-0">
-        <svg
-          width="100%"
-          height="100%"
-          viewBox={`${svgBounds.minX} ${svgBounds.minY} ${svgBounds.maxX - svgBounds.minX} ${svgBounds.maxY - svgBounds.minY}`}
-          className="w-full h-full"
-        >
-          {hexagons.map((hexagon) => {
-            const dataIndex = hexagon.dataIndex;
-            const isClickable = hexagon.hasData && 
-              !moraIndices.includes(dataIndex) && 
-              dataIndex < aportes.length;
-            
-            return (
-              <Hexagon
-                key={hexagon.id}
-                color={hexagon.color}
-                x={hexagon.x}
-                y={hexagon.y}
-                size={hexSize}
-                hasData={hexagon.hasData}
-                onClick={() => {
-                  if (isClickable) {
-                    setSelectedStudentIndex(dataIndex);
-                  }
-                }}
-              />
-            );
-          })}
-        </svg>
-      </div>
+      <canvas 
+        ref={canvasRef} 
+        onClick={handleCanvasClick}
+        className="absolute inset-0 w-full h-full cursor-pointer"
+      />
 
       {/* Stats Section */}
       <div className="absolute top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-10">
