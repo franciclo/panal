@@ -1,4 +1,5 @@
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Slider } from "@/components/ui/slider";
 import { formatAbbreviated } from '@/lib/format-utils';
 import { MIN_PAYMENT, MAX_PAYMENT } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
@@ -109,13 +110,12 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
                   })()}
 
                   <div className="text-sm text-gray-600 mb-4">Ajustar Aportes (%)</div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    step="1"
-                    value={percentageChange}
-                    onChange={(e) => onAporteChange(Number(e.target.value))}
+                  <Slider
+                    min={-100}
+                    max={100}
+                    step={1}
+                    value={[percentageChange]}
+                    onValueChange={(value) => onAporteChange(value[0])}
                     className="w-full"
                   />
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
