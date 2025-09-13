@@ -37,12 +37,12 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
       // --- Responsive Layout Calculation ---
-      const statsHeight = dimensions.width < 640 ? 40 : 50; // Reduced height
-      const toolbarHeight = dimensions.width < 640 ? 50 : 60; // Reduced height
-      const sidePadding = dimensions.width < 640 ? 10 : 20;   // Reduced padding
+      const statsHeight = dimensions.width < 640 ? 50 : 60;
+      const toolbarHeight = dimensions.width < 640 ? 60 : 80;
+      const sidePadding = dimensions.width < 640 ? 5 : 10;   // Minimal padding to allow wider grid
       
-      // Give more priority to vertical space
-      const verticalPadding = dimensions.height * 0.01; // Use 10% of total height for top/bottom padding
+      // Add more vertical padding to prevent overlap
+      const verticalPadding = dimensions.height * 0.05; // Use 5% of total height for top/bottom padding
       
       const availableHeight = dimensions.height - statsHeight - toolbarHeight - (verticalPadding * 2);
       const availableWidth = dimensions.width - (sidePadding * 2);
@@ -53,7 +53,8 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       const maxHexSizeByHeight = availableHeight / clusterHeightFactor;
       const maxHexSizeByWidth = availableWidth / clusterWidthFactor;
       
-      const hexSize = Math.max(8, Math.min(35, maxHexSizeByHeight, maxHexSizeByWidth));
+      // Use the maximum possible size that fits both constraints, prioritizing width
+      const hexSize = Math.max(8, Math.min(45, Math.min(maxHexSizeByHeight, maxHexSizeByWidth * 1.2)));
       
       const { centerX, centerY, HEX_WIDTH, HEX_HEIGHT, viewportRadius } = calculateHexagonGrid(dimensions, hexSize);
 

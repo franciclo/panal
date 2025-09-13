@@ -34,9 +34,11 @@ export function drawHexagon(
 export function calculateHexagonGrid(dimensions: any, hexSize: number) {
   const centerX = dimensions.width / 2;
   const statsHeight = dimensions.width < 640 ? 50 : 60;
+  const toolbarHeight = dimensions.width < 640 ? 60 : 80;
   const topPadding = dimensions.width < 640 ? 20 : 40;
-  const availableHeight = dimensions.height - statsHeight - (dimensions.width < 640 ? 60 : 80) - topPadding - (dimensions.width < 640 ? 30 : 52);
-  const centerY = statsHeight + topPadding + availableHeight / 2;
+  const verticalPadding = dimensions.height * 0.05; // Match the padding from useCanvas
+  const availableHeight = dimensions.height - statsHeight - toolbarHeight - topPadding - (verticalPadding * 2);
+  const centerY = statsHeight + topPadding + verticalPadding + availableHeight / 2;
 
   const HEX_WIDTH = hexSize * Math.sqrt(3);
   const HEX_HEIGHT = hexSize * 1.5;
