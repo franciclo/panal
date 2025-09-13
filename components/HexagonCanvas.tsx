@@ -1,8 +1,8 @@
 import { useCanvas } from '@/lib/hooks/useCanvas';
-import type { Dimensions } from '@/lib/types';
+import type { Dimensions, Aporte } from '@/lib/types';
 
 interface HexagonCanvasProps {
-  aportes: number[];
+  aportes: Aporte[][];
   moraIndices: number[];
   dimensions: Dimensions;
 }

@@ -1,15 +1,24 @@
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { formatAbbreviated } from '@/lib/format-utils';
 import { MIN_PAYMENT, MAX_PAYMENT } from '@/lib/constants';
+import { Aporte } from "@/lib/types";
 
 interface ToolbarProps {
   presupuestoTotal: number;
-  aportes: number[];
+  aportes: Aporte[][];
   designatedUserIndex: number;
-  onAporteChange: (newAporte: number) => void;
+  onAporteChange: (percentageChange: number) => void;
+  getUserAportesSum: (userIndex: number) => number;
+  getInitialUserAportesSum: (userIndex: number) => number;
 }
 
-export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onAporteChange }: ToolbarProps) {
+export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onAporteChange, getUserAportesSum, getInitialUserAportesSum }: ToolbarProps) {
+  const currentSum = getUserAportesSum(designatedUserIndex);
+  const initialSum = getInitialUserAportesSum(designatedUserIndex);
+
+  // This calculates the percentage *change* (e.g., -50, 0, +50) for the slider value
+  const percentageChange = initialSum > 0 ? ((currentSum / initialSum) - 1) * 100 : 0;
+  
   return (
     <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10">
       <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg sm:rounded-xl md:rounded-2xl px-3 sm:px-4 py-2">
@@ -51,7 +60,7 @@ export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onApor
               <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Aporte</div>
                 <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
-                  {formatAbbreviated(aportes[designatedUserIndex] || 0)}
+                  {formatAbbreviated(getUserAportesSum(designatedUserIndex))}
                 </div>
               </button>
             </DrawerTrigger>
@@ -62,21 +71,56 @@ export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onApor
               <div className="p-4">
                 <div className="text-center mb-4">
                   <div className="text-4xl font-bold mb-2 text-gray-900">
-                    ${aportes[designatedUserIndex]?.toLocaleString() || '0'}
+                    ${getUserAportesSum(designatedUserIndex).toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-600 mb-4">Aporte Mensual</div>
+                  <div className="text-sm text-gray-600 mb-2">Total de Aportes</div>
+                  
+                  {/* Individual aportes */}
+                  <div className="mb-4">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Aportes Individuales:</div>
+                    <div className="space-y-1">
+                      {aportes[designatedUserIndex]?.map((aporte, index) => (
+                        <div key={aporte.id} className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                          Aporte {index + 1}: ${aporte.value.toLocaleString()}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Percentage change */}
+                  {(() => {
+                    const currentSum = getUserAportesSum(designatedUserIndex);
+                    const initialSum = getInitialUserAportesSum(designatedUserIndex);
+                    const percentageChange = initialSum > 0 ? ((currentSum - initialSum) / initialSum) * 100 : 0;
+                    const isIncrease = percentageChange > 0;
+                    const isDecrease = percentageChange < 0;
+                    
+                    return (
+                      <div className="mb-4">
+                        <div className="text-sm font-medium text-gray-700 mb-1">Cambio desde el valor inicial:</div>
+                        <div className={`text-lg font-semibold ${isIncrease ? 'text-green-600' : isDecrease ? 'text-red-600' : 'text-gray-600'}`}>
+                          {isIncrease ? '+' : ''}{percentageChange.toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Inicial: ${initialSum.toLocaleString()} → Actual: ${currentSum.toLocaleString()}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="text-sm text-gray-600 mb-4">Ajustar Aportes (%)</div>
                   <input
                     type="range"
-                    min={MIN_PAYMENT}
-                    max={MAX_PAYMENT}
-                    step="10000"
-                    value={aportes[designatedUserIndex] || 0}
+                    min="-100"
+                    max="100"
+                    step="1"
+                    value={percentageChange}
                     onChange={(e) => onAporteChange(Number(e.target.value))}
                     className="w-full"
                   />
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>$100K</span>
-                    <span>$1M</span>
+                    <span>-100%</span>
+                    <span>+100%</span>
                   </div>
                 </div>
               </div>

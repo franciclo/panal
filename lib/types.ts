@@ -1,6 +1,13 @@
+import { type } from "os";
+
 // Core data types
+export interface Aporte {
+  id: string;
+  value: number;
+}
+
 export interface StudentData {
-  aporte: number;
+  aportes: Aporte[]; // Now an array of Aporte objects
   isEnMora: boolean;
   index: number;
 }
@@ -9,7 +16,8 @@ export interface HexagonData {
   x: number;
   y: number;
   size: number;
-  dataIndex: number;
+  studentIndex: number;
+  aporteId: string; // The unique ID of the aporte this hexagon represents
   hasData: boolean;
 }
 

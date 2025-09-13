@@ -9,10 +9,10 @@ import { Toolbar } from '@/components/Toolbar';
 import { HexagonCanvas } from '@/components/HexagonCanvas';
 
 export default function Home() {
-  const { aportes, moraIndices, designatedUserIndex, handleAporteChange } = useStudentData();
+  const { aportes, moraIndices, designatedUserIndex, handleAporteChange, getUserAportesSum, getInitialUserAportesSum } = useStudentData();
   const dimensions = useDimensions();
 
-  const presupuestoTotal = aportes.reduce((sum, aporte) => sum + aporte, 0);
+  const presupuestoTotal = aportes.flat().reduce((sum, aporte) => sum + aporte.value, 0);
 
   const stats = useMemo(() => {
     return calculatePaymentStats(aportes, moraIndices);
@@ -36,6 +36,8 @@ export default function Home() {
         aportes={aportes}
         designatedUserIndex={designatedUserIndex}
         onAporteChange={handleAporteChange}
+        getUserAportesSum={getUserAportesSum}
+        getInitialUserAportesSum={getInitialUserAportesSum}
       />
     </div>
   );
