@@ -145,7 +145,23 @@ export default function Home() {
 
   // Generate hexagonal grid
   const hexagons = useMemo(() => {
-    const hexSize = Math.max(12, Math.min(35, Math.min(dimensions.width, dimensions.height) / 25));
+    // Calculate available space between stats pill and bottom toolbar
+    const statsHeight = dimensions.width < 640 ? 50 : 60; // Responsive stats height
+    const toolbarHeight = dimensions.width < 640 ? 60 : 80; // Responsive toolbar height
+    const topPadding = dimensions.width < 640 ? 10 : 20; // Responsive top padding
+    const bottomPadding = dimensions.width < 640 ? 20 : 32; // Responsive bottom padding (increased for proper spacing)
+    const sidePadding = dimensions.width < 640 ? 10 : 20; // Responsive side padding
+    
+    const availableHeight = dimensions.height - statsHeight - toolbarHeight - topPadding - bottomPadding;
+    const availableWidth = dimensions.width - (sidePadding * 2);
+    
+    // Calculate hex size based on available space, ensuring it fits within bounds
+    const maxHexSizeByHeight = availableHeight / (DATA_RADIUS * 2 * Math.sqrt(3));
+    const maxHexSizeByWidth = availableWidth / (DATA_RADIUS * 2 * 1.5);
+    const maxHexSize = Math.min(maxHexSizeByHeight, maxHexSizeByWidth);
+    
+    const hexSize = Math.max(8, Math.min(35, maxHexSize));
+    
     const centerX = dimensions.width / 2;
     const centerY = dimensions.height / 2;
     
@@ -205,15 +221,30 @@ export default function Home() {
     return hexagons;
   }, [aportes, moraIndices, dimensions]);
 
-  // SVG dimensions
-  const padding = 200;
+  // SVG dimensions - use responsive padding
+  const responsivePadding = Math.max(50, Math.min(200, dimensions.width * 0.1));
   const svgBounds = {
-    minX: -padding,
-    minY: -padding,
-    maxX: dimensions.width + padding,
-    maxY: dimensions.height + padding
+    minX: -responsivePadding,
+    minY: -responsivePadding,
+    maxX: dimensions.width + responsivePadding,
+    maxY: dimensions.height + responsivePadding
   };
-  const hexSize = Math.max(12, Math.min(35, Math.min(dimensions.width, dimensions.height) / 25));
+  
+  // Use the same hexSize calculation as in hexagons useMemo
+  const statsHeight = dimensions.width < 640 ? 50 : 60;
+  const toolbarHeight = dimensions.width < 640 ? 60 : 80;
+  const topPadding = dimensions.width < 640 ? 10 : 20;
+  const bottomPadding = dimensions.width < 640 ? 20 : 32;
+  const sidePadding = dimensions.width < 640 ? 10 : 20;
+  
+  const availableHeight = dimensions.height - statsHeight - toolbarHeight - topPadding - bottomPadding;
+  const availableWidth = dimensions.width - (sidePadding * 2);
+  
+  const maxHexSizeByHeight = availableHeight / (DATA_RADIUS * 2 * Math.sqrt(3));
+  const maxHexSizeByWidth = availableWidth / (DATA_RADIUS * 2 * 1.5);
+  const maxHexSize = Math.min(maxHexSizeByHeight, maxHexSizeByWidth);
+  
+  const hexSize = Math.max(8, Math.min(35, maxHexSize));
 
   const handleAporteChange = (newAporte: number) => {
     setAportes(prev => {
@@ -293,8 +324,8 @@ export default function Home() {
       </div>
 
       {/* Stats Section */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border border-gray-200 flex items-center space-x-6 sm:space-x-8">
+      <div className="absolute top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 sm:px-6 py-2 sm:py-3 shadow-lg border border-gray-200 flex items-center space-x-3 sm:space-x-6 md:space-x-8">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full" style={{backgroundColor: COLORS.mora}}></div>
             <div className="text-left">
@@ -320,15 +351,15 @@ export default function Home() {
       </div>
 
       {/* Bottom Toolbar - Absolute positioned at bottom */}
-      <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-xl sm:rounded-2xl px-4 py-2">
-          <div className="flex items-center space-x-4">
+      <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg sm:rounded-xl md:rounded-2xl px-3 sm:px-4 py-2">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Presupuesto */}
             <Drawer>
               <DrawerTrigger asChild>
-                <button className="text-left hover:bg-gray-50/80 rounded-lg px-2 py-2 cursor-pointer">
+                <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Presupuesto</div>
-                  <div className="text-lg font-bold text-gray-900 leading-tight">
+                  <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
                     {formatAbbreviated(presupuestoTotal)}
                   </div>
                 </button>
@@ -357,9 +388,9 @@ export default function Home() {
             {/* Aporte */}
             <Drawer>
               <DrawerTrigger asChild>
-                <button className="text-left hover:bg-gray-50/80 rounded-lg px-2 py-2 cursor-pointer">
+                <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
                   <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Aporte</div>
-                  <div className="text-lg font-bold text-gray-900 leading-tight">
+                  <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
                     {formatAbbreviated(aportes[selectedStudentIndex] || 0)}
                   </div>
                 </button>
