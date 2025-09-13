@@ -142,7 +142,7 @@ export default function Home() {
 
   // Generate hexagonal grid with mathematical precision
   const hexagons = useMemo(() => {
-    const hexSize = Math.max(8, Math.min(20, Math.min(dimensions.width, dimensions.height) / 50));
+    const hexSize = Math.max(12, Math.min(35, Math.min(dimensions.width, dimensions.height) / 25));
     const centerX = dimensions.width / 2;
     const centerY = dimensions.height / 2;
     const dataRadius = 11;
@@ -216,7 +216,7 @@ export default function Home() {
   const maxY = dimensions.height + padding;
   const minX = -padding;
   const minY = -padding;
-  const hexSize = Math.max(8, Math.min(20, Math.min(dimensions.width, dimensions.height) / 50));
+  const hexSize = Math.max(12, Math.min(35, Math.min(dimensions.width, dimensions.height) / 25));
 
   const handleValueChange = (newValue: number) => {
     const newNumbers = [...numbers];
