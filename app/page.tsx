@@ -9,7 +9,7 @@ import { Toolbar } from '@/components/Toolbar';
 import { HexagonCanvas } from '@/components/HexagonCanvas';
 
 export default function Home() {
-  const { aportes, moraIndices, selectedStudentIndex, setSelectedStudentIndex, handleAporteChange } = useStudentData();
+  const { aportes, moraIndices, designatedUserIndex, handleAporteChange } = useStudentData();
   const dimensions = useDimensions();
 
   const presupuestoTotal = aportes.reduce((sum, aporte) => sum + aporte, 0);
@@ -25,7 +25,6 @@ export default function Home() {
         aportes={aportes}
         moraIndices={moraIndices}
         dimensions={dimensions}
-        onHexagonClick={setSelectedStudentIndex}
       />
 
       {/* Stats Section */}
@@ -35,7 +34,7 @@ export default function Home() {
       <Toolbar 
         presupuestoTotal={presupuestoTotal}
         aportes={aportes}
-        selectedStudentIndex={selectedStudentIndex}
+        designatedUserIndex={designatedUserIndex}
         onAporteChange={handleAporteChange}
       />
     </div>

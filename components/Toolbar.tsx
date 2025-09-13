@@ -5,11 +5,11 @@ import { MIN_PAYMENT, MAX_PAYMENT } from '@/lib/constants';
 interface ToolbarProps {
   presupuestoTotal: number;
   aportes: number[];
-  selectedStudentIndex: number;
+  designatedUserIndex: number;
   onAporteChange: (newAporte: number) => void;
 }
 
-export function Toolbar({ presupuestoTotal, aportes, selectedStudentIndex, onAporteChange }: ToolbarProps) {
+export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onAporteChange }: ToolbarProps) {
   return (
     <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10">
       <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg sm:rounded-xl md:rounded-2xl px-3 sm:px-4 py-2">
@@ -26,7 +26,7 @@ export function Toolbar({ presupuestoTotal, aportes, selectedStudentIndex, onApo
             </DrawerTrigger>
             <DrawerContent className="bg-white text-gray-900">
               <DrawerTitle className="text-gray-900">
-                Presupuesto Total
+                {/* Presupuesto Total */}
               </DrawerTitle>
               <div className="p-4">
                 <div className="text-center mb-4">
@@ -45,24 +45,24 @@ export function Toolbar({ presupuestoTotal, aportes, selectedStudentIndex, onApo
           {/* Separator */}
           <div className="w-px h-8 bg-gradient-to-b from-gray-200 to-gray-300"></div>
 
-          {/* Aporte */}
+          {/* Mi Aporte */}
           <Drawer>
             <DrawerTrigger asChild>
               <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Aporte</div>
                 <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
-                  {formatAbbreviated(aportes[selectedStudentIndex] || 0)}
+                  {formatAbbreviated(aportes[designatedUserIndex] || 0)}
                 </div>
               </button>
             </DrawerTrigger>
             <DrawerContent className="bg-white text-gray-900">
               <DrawerTitle className="text-gray-900">
-                Estudiante {selectedStudentIndex + 1}
+                {/* Mi Aporte Mensual */}
               </DrawerTitle>
               <div className="p-4">
                 <div className="text-center mb-4">
                   <div className="text-4xl font-bold mb-2 text-gray-900">
-                    ${aportes[selectedStudentIndex]?.toLocaleString() || '0'}
+                    ${aportes[designatedUserIndex]?.toLocaleString() || '0'}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">Aporte Mensual</div>
                   <input
@@ -70,7 +70,7 @@ export function Toolbar({ presupuestoTotal, aportes, selectedStudentIndex, onApo
                     min={MIN_PAYMENT}
                     max={MAX_PAYMENT}
                     step="10000"
-                    value={aportes[selectedStudentIndex] || 0}
+                    value={aportes[designatedUserIndex] || 0}
                     onChange={(e) => onAporteChange(Number(e.target.value))}
                     className="w-full"
                   />

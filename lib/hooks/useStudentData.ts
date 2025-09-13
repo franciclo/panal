@@ -5,27 +5,27 @@ import { TOTAL_STUDENTS } from '../constants';
 export function useStudentData() {
   const [aportes, setAportes] = useState<number[]>([]);
   const [moraIndices, setMoraIndices] = useState<number[]>([]);
-  const [selectedStudentIndex, setSelectedStudentIndex] = useState<number>(0);
+  const [designatedUserIndex, setDesignatedUserIndex] = useState<number>(0);
 
   useEffect(() => {
-    const aportes = generateAportes();
-    const moraIndices = generateMoraIndices();
+    const generatedAportes = generateAportes();
+    const generatedMoraIndices = generateMoraIndices();
     
-    setAportes(aportes);
-    setMoraIndices(moraIndices);
+    setAportes(generatedAportes);
+    setMoraIndices(generatedMoraIndices);
     
-    // Select random student (not in mora)
+    // Select a random user (not in mora) as the designated user
     let randomIndex;
     do {
       randomIndex = Math.floor(Math.random() * TOTAL_STUDENTS);
-    } while (moraIndices.includes(randomIndex));
-    setSelectedStudentIndex(randomIndex);
+    } while (generatedMoraIndices.includes(randomIndex));
+    setDesignatedUserIndex(randomIndex);
   }, []);
 
   const handleAporteChange = (newAporte: number) => {
     setAportes(prev => {
       const updated = [...prev];
-      updated[selectedStudentIndex] = newAporte;
+      updated[designatedUserIndex] = newAporte;
       return updated;
     });
   };
@@ -33,8 +33,7 @@ export function useStudentData() {
   return {
     aportes,
     moraIndices,
-    selectedStudentIndex,
-    setSelectedStudentIndex,
+    designatedUserIndex,
     handleAporteChange
   };
 }

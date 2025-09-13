@@ -30,21 +30,6 @@ export function drawHexagon(
   ctx.stroke();
 }
 
-// Find clicked hexagon using simple distance check
-export function findClickedHexagon(
-  clickX: number,
-  clickY: number,
-  hexGridData: HexagonData[]
-): HexagonData | null {
-  for (const hex of hexGridData) {
-    const distance = Math.sqrt((clickX - hex.x) ** 2 + (clickY - hex.y) ** 2);
-    if (distance < hex.size) {
-      return hex;
-    }
-  }
-  return null;
-}
-
 // Calculate hexagon grid layout
 export function calculateHexagonGrid(dimensions: any, hexSize: number) {
   const centerX = dimensions.width / 2;

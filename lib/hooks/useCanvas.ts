@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { drawHexagon, findClickedHexagon, calculateHexagonGrid } from '../canvas-utils';
+import { drawHexagon, calculateHexagonGrid } from '../canvas-utils';
 import { getPaymentColor } from '../color-utils';
 import { COLORS, DATA_RADIUS, TOTAL_STUDENTS, STANDARD_PAYMENT } from '../constants';
 import type { Dimensions, HexagonData } from '../types';
@@ -8,10 +8,9 @@ interface UseCanvasProps {
   aportes: number[];
   moraIndices: number[];
   dimensions: Dimensions;
-  onHexagonClick: (dataIndex: number) => void;
 }
 
-export function useCanvas({ aportes, moraIndices, dimensions, onHexagonClick }: UseCanvasProps) {
+export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hexGridData = useRef<HexagonData[]>([]);
   const prevAportes = useRef<number[]>([]);
@@ -109,28 +108,7 @@ export function useCanvas({ aportes, moraIndices, dimensions, onHexagonClick }: 
     prevAportes.current = aportes;
   }, [aportes, moraIndices, dimensions]);
 
-  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-
-    const clickedHex = findClickedHexagon(clickX, clickY, hexGridData.current);
-    if (clickedHex) {
-      const dataIndex = clickedHex.dataIndex;
-      const isClickable = clickedHex.hasData && 
-                          !moraIndices.includes(dataIndex) && 
-                          dataIndex < aportes.length;
-      if (isClickable) {
-        onHexagonClick(dataIndex);
-      }
-    }
-  };
-
   return {
-    canvasRef,
-    handleCanvasClick
+    canvasRef
   };
 }
