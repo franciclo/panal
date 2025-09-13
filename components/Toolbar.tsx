@@ -20,7 +20,7 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
   const percentageChange = initialSum > 0 ? ((currentSum / initialSum) - 1) * 100 : 0;
   
   return (
-    <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+    <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10" style={{bottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
       <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg sm:rounded-xl md:rounded-2xl px-3 sm:px-4 py-2">
         <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Presupuesto */}

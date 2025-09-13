@@ -19,7 +19,7 @@ export default function Home() {
   }, [aportes, moraIndices]);
 
   return (
-    <div className="h-screen w-screen bg-gray-100 relative overflow-hidden">
+    <div className="h-screen w-screen bg-gray-100 relative overflow-hidden" style={{height: '100dvh'}}>
       {/* Full Page Hexagonal Grid - covers entire viewport */}
       <HexagonCanvas 
         aportes={aportes}
