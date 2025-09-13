@@ -34,10 +34,11 @@ interface HexagonProps {
   y: number;
   size: number;
   isSelected: boolean;
+  hasData: boolean;
   onClick: () => void;
 }
 
-function Hexagon({ color, x, y, size, isSelected, onClick }: HexagonProps) {
+function Hexagon({ color, x, y, size, isSelected, hasData, onClick }: HexagonProps) {
   const points = useMemo(() => {
     // Pointy-top hexagon: points at left/right, flat sides at top/bottom
     const sqrt3_2 = size * Math.sqrt(3) / 2;
@@ -57,7 +58,7 @@ function Hexagon({ color, x, y, size, isSelected, onClick }: HexagonProps) {
     <polygon
       points={points}
       fill={color}
-      stroke={isSelected ? "#fbbf24" : "#ffffff"}
+      stroke={isSelected ? "#fbbf24" : (hasData ? color : "#ffffff")}
       strokeWidth={isSelected ? "3" : "1"}
       className="transition-all hover:opacity-80 cursor-pointer"
       onClick={onClick}
@@ -290,6 +291,7 @@ export default function Home() {
                 y={hexagon.y}
                 size={hexSize}
                 isSelected={selectedBoxIndex === dataIndex}
+                hasData={hexagon.hasData}
                 onClick={() => {
                   if (isClickable) {
                     setSelectedBoxIndex(dataIndex);
