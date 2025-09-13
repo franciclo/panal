@@ -14,12 +14,12 @@ export function drawHexagon(
   const halfSize = size / 2;
 
   ctx.beginPath();
-  ctx.moveTo(x + size, y);
-  ctx.lineTo(x + halfSize, y - sqrt3_2);
-  ctx.lineTo(x - halfSize, y - sqrt3_2);
-  ctx.lineTo(x - size, y);
-  ctx.lineTo(x - halfSize, y + sqrt3_2);
-  ctx.lineTo(x + halfSize, y + sqrt3_2);
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x + sqrt3_2, y - halfSize);
+  ctx.lineTo(x + sqrt3_2, y + halfSize);
+  ctx.lineTo(x, y + size);
+  ctx.lineTo(x - sqrt3_2, y + halfSize);
+  ctx.lineTo(x - sqrt3_2, y - halfSize);
   ctx.closePath();
 
   ctx.fillStyle = color;
@@ -38,8 +38,8 @@ export function calculateHexagonGrid(dimensions: any, hexSize: number) {
   const availableHeight = dimensions.height - statsHeight - (dimensions.width < 640 ? 60 : 80) - topPadding - (dimensions.width < 640 ? 30 : 52);
   const centerY = statsHeight + topPadding + availableHeight / 2;
 
-  const HEX_WIDTH = hexSize * 1.5;
-  const HEX_HEIGHT = hexSize * Math.sqrt(3);
+  const HEX_WIDTH = hexSize * Math.sqrt(3);
+  const HEX_HEIGHT = hexSize * 1.5;
 
   const viewportRadius = Math.ceil(Math.max(dimensions.width / HEX_WIDTH, dimensions.height / HEX_HEIGHT)) + 2;
 

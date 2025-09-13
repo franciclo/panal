@@ -47,8 +47,8 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       const availableHeight = dimensions.height - statsHeight - toolbarHeight - (verticalPadding * 2);
       const availableWidth = dimensions.width - (sidePadding * 2);
       
-      const clusterHeightFactor = Math.sqrt(3) * (2 * DATA_RADIUS + 1);
-      const clusterWidthFactor = (3 * DATA_RADIUS) + 2;
+      const clusterHeightFactor = (3 * DATA_RADIUS) + 2;
+      const clusterWidthFactor = Math.sqrt(3) * (2 * DATA_RADIUS + 1);
 
       const maxHexSizeByHeight = availableHeight / clusterHeightFactor;
       const maxHexSizeByWidth = availableWidth / clusterWidthFactor;
@@ -66,8 +66,8 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
         const r2 = Math.min(viewportRadius, -q + viewportRadius);
 
         for (let r = r1; r <= r2; r++) {
-          const x = centerX + HEX_WIDTH * q;
-          const y = centerY + HEX_HEIGHT * (r + q / 2);
+          const x = centerX + HEX_WIDTH * (q + r / 2);
+          const y = centerY + HEX_HEIGHT * r;
 
           if (x + hexSize < 0 || x - hexSize > dimensions.width || y + hexSize < 0 || y - hexSize > dimensions.height) {
             continue;
