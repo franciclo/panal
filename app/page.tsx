@@ -139,66 +139,63 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
       {/* Stats Section */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-3 sm:px-4 py-3">
-          <div className="flex items-center justify-center space-x-4 sm:space-x-6 lg:space-x-8">
-            {(() => {
-              const stats = calculateStats();
-              return (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full"></div>
-                    <div className="text-center">
-                      <div className="text-sm sm:text-base font-bold text-gray-900">{stats.redBoxes.formatted}</div>
-                      <div className="text-xs text-gray-500">Red</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full"></div>
-                    <div className="text-center">
-                      <div className="text-sm sm:text-base font-bold text-gray-900">{stats.surplus.formatted}</div>
-                      <div className="text-xs text-gray-500">Surplus</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-300 rounded-full border border-green-400"></div>
-                    <div className="text-center">
-                      <div className="text-sm sm:text-base font-bold text-gray-900">{stats.charity.formatted}</div>
-                      <div className="text-xs text-gray-500">Charity</div>
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
+      <div className="bg-gray-100 px-3 sm:px-4 py-3 flex-shrink-0">
+        <div className="flex justify-center">
+          {(() => {
+            const stats = calculateStats();
+            return (
+              <div className="bg-white rounded-full px-6 py-3 shadow-sm border border-gray-200 flex items-center space-x-6 sm:space-x-8">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full"></div>
+                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.redBoxes.formatted}</div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full"></div>
+                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.surplus.formatted}</div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-300 rounded-full border border-green-400"></div>
+                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.charity.formatted}</div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
       {/* Grid Container */}
-      <div className="w-full h-[calc(100vh-9rem)] overflow-hidden">
+      <div className="flex-1 flex justify-center items-center p-3 sm:p-4 lg:p-6 min-h-0">
         <div 
-          className="grid h-full w-full"
+          className="grid aspect-square rounded-xl overflow-hidden shadow-lg"
           style={{
             gridTemplateColumns: 'repeat(20, 1fr)',
-            gridTemplateRows: 'repeat(20, 1fr)'
+            gridTemplateRows: 'repeat(20, 1fr)',
+            width: 'min(calc(100vw - 1.5rem), calc(100vh - 8rem))',
+            height: 'min(calc(100vw - 1.5rem), calc(100vh - 8rem))'
           }}
         >
-          {numbers.map((number, index) => {
+          {Array.from({ length: 400 }, (_, index) => {
+            const number = numbers[index] || 500000; // Default value for empty boxes
             const isRedBox = redBoxIndices.includes(index);
-            const colorStyle = isRedBox ? { backgroundColor: 'hsl(0, 70%, 50%)' } : getBoxColor(number);
+            const isEmptyBox = index >= numbers.length;
+            const colorStyle = isRedBox 
+              ? { backgroundColor: 'hsl(0, 70%, 50%)' } 
+              : isEmptyBox 
+                ? { backgroundColor: 'hsl(0, 0%, 95%)' } // Light gray for empty boxes
+                : getBoxColor(number);
             
             return (
               <div
                 key={index}
                 className={`
                   ${selectedBoxIndex === index ? 'border-4 border-yellow-400' : ''}
-                  ${isRedBox ? 'cursor-not-allowed' : 'cursor-pointer'}
+                  ${isRedBox || isEmptyBox ? 'cursor-not-allowed' : 'cursor-pointer'}
                   transition-all duration-200
                 `}
                 style={colorStyle}
-                title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : number.toLocaleString()}`}
+                title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : isEmptyBox ? 'Empty Box' : number.toLocaleString()}`}
               />
             );
           })}
@@ -206,7 +203,7 @@ export default function Home() {
       </div>
 
       {/* Bottom Toolbar */}
-      <div className="bg-white border-t border-gray-200 shadow-lg">
+      <div className="bg-white border-t border-gray-200 shadow-lg flex-shrink-0">
         <div className="px-3 sm:px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Left - Total */}
