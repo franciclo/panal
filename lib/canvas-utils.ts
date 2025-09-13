@@ -51,3 +51,29 @@ export function calculateHexagonGrid(dimensions: any, hexSize: number) {
     viewportRadius
   };
 }
+
+/**
+ * Checks if a hexagon at a given axial coordinate is inside the main grid shape.
+ * @param q - The q axial coordinate.
+ * @param r - The r axial coordinate.
+ * @param radius - The radius of the grid shape.
+ * @returns True if the coordinate is inside the shape, false otherwise.
+ */
+export function isInGridShape(q: number, r: number, radius: number): boolean {
+  const s = -q - r;
+
+  if (Math.max(Math.abs(q), Math.abs(r), Math.abs(s)) > radius) {
+    return false;
+  }
+
+  const cornerCutoff = Math.ceil(radius / 2);
+  if (
+    Math.abs(q - r) > radius + cornerCutoff ||
+    Math.abs(r - s) > radius + cornerCutoff ||
+    Math.abs(s - q) > radius + cornerCutoff
+  ) {
+    return false;
+  }
+
+  return true;
+}

@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { drawHexagon, calculateHexagonGrid } from '../canvas-utils';
+import { drawHexagon, calculateHexagonGrid, isInGridShape } from '../canvas-utils';
 import { getPaymentColor } from '../color-utils';
 import { COLORS, DATA_RADIUS, STANDARD_PAYMENT } from '../constants';
 import type { Dimensions, HexagonData, Aporte } from '../types';
@@ -36,13 +36,15 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       canvas.style.height = `${dimensions.height}px`;
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-      const statsHeight = dimensions.width < 640 ? 50 : 60;
-      const toolbarHeight = dimensions.width < 640 ? 60 : 80;
-      const topPadding = dimensions.width < 640 ? 20 : 40;
-      const bottomPadding = dimensions.width < 640 ? 30 : 52;
-      const sidePadding = dimensions.width < 640 ? 20 : 40;
+      // --- Responsive Layout Calculation ---
+      const statsHeight = dimensions.width < 640 ? 40 : 50; // Reduced height
+      const toolbarHeight = dimensions.width < 640 ? 50 : 60; // Reduced height
+      const sidePadding = dimensions.width < 640 ? 10 : 20;   // Reduced padding
       
-      const availableHeight = dimensions.height - statsHeight - toolbarHeight - topPadding - bottomPadding;
+      // Give more priority to vertical space
+      const verticalPadding = dimensions.height * 0.01; // Use 10% of total height for top/bottom padding
+      
+      const availableHeight = dimensions.height - statsHeight - toolbarHeight - (verticalPadding * 2);
       const availableWidth = dimensions.width - (sidePadding * 2);
       
       const clusterHeightFactor = Math.sqrt(3) * (2 * DATA_RADIUS + 1);
@@ -71,8 +73,8 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
             continue;
           }
 
-          const hexDistance = (Math.abs(q) + Math.abs(r) + Math.abs(-q - r)) / 2;
-          const hasData = hexDistance <= DATA_RADIUS && aporteIdCounter < TOTAL_APORTES;
+          const isInShape = isInGridShape(q, r, DATA_RADIUS);
+          const hasData = isInShape && aporteIdCounter < TOTAL_APORTES;
 
           let color: string;
           if (hasData) {
@@ -90,7 +92,8 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
             
             aporteIdCounter++;
           } else {
-            color = COLORS.background;
+            // Render the star outline with a different background color
+            color = isInShape ? COLORS.backgroundBorder : COLORS.background;
           }
           drawHexagon(ctx, x, y, hexSize, color, hasData);
         }

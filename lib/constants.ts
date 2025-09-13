@@ -5,7 +5,7 @@ export const MORA_COUNT = 80;
 export const STANDARD_PAYMENT = 500000;
 export const MIN_PAYMENT = 100000;
 export const MAX_PAYMENT = 1000000;
-export const DATA_RADIUS = 12; // Increased from 11 to fit all 400 aportes
+export const DATA_RADIUS = 11; // Optimal radius for a symmetrical 400-item grid
 
 // Color constants
 export const COLORS = {
