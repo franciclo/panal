@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 
 // Generate 400 numbers, most around 500000 with some variation
@@ -26,6 +26,41 @@ const generateRedBoxIndices = () => {
   
   return Array.from(redBoxIndices);
 };
+
+// Hexagon component for SVG rendering
+interface HexagonProps {
+  color: string;
+  x: number;
+  y: number;
+  size: number;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+function Hexagon({ color, x, y, size, isSelected, onClick }: HexagonProps) {
+  const points = useMemo(() => {
+    const angles = [0, 60, 120, 180, 240, 300];
+    return angles
+      .map((angle) => {
+        const radian = (angle * Math.PI) / 180;
+        const px = x + size * Math.cos(radian);
+        const py = y + size * Math.sin(radian);
+        return `${px},${py}`;
+      })
+      .join(" ");
+  }, [x, y, size]);
+
+  return (
+    <polygon
+      points={points}
+      fill={color}
+      stroke={isSelected ? "#fbbf24" : "#ffffff"}
+      strokeWidth={isSelected ? "3" : "1"}
+      className="transition-all hover:opacity-80 cursor-pointer"
+      onClick={onClick}
+    />
+  );
+}
 
 // Calculate HSL color based on value - smooth transition from white to green to blue
 const getBoxColor = (value: number) => {
@@ -89,6 +124,59 @@ export default function Home() {
   }, []);
 
   const totalSum = numbers.reduce((sum, num) => sum + num, 0);
+
+  // Generate hexagonal grid data using cube coordinates
+  const hexagons = useMemo(() => {
+    const hexSize = 15;
+    const hexagons: Array<{ id: number; color: string; x: number; y: number }> = [];
+
+    const radius = 11; // Number of hexagons from center to edge
+    const centerX = radius * hexSize * 1.5;
+    const centerY = radius * hexSize * Math.sqrt(3);
+    let id = 0;
+
+    for (let q = -radius; q <= radius && id < 400; q++) {
+      const r1 = Math.max(-radius, -q - radius);
+      const r2 = Math.min(radius, -q + radius);
+
+      for (let r = r1; r <= r2 && id < 400; r++) {
+        // Convert cube coordinates to pixel coordinates
+        const x = centerX + hexSize * 1.5 * q;
+        const y = centerY + hexSize * Math.sqrt(3) * (r + q / 2);
+
+        const number = numbers[id] || 500000;
+        const isRedBox = redBoxIndices.includes(id);
+        const isEmptyBox = id >= numbers.length;
+        
+        let color: string;
+        if (isRedBox) {
+          color = 'hsl(0, 70%, 50%)';
+        } else if (isEmptyBox) {
+          color = 'hsl(0, 0%, 95%)';
+        } else {
+          const colorData = getBoxColor(number);
+          color = colorData.backgroundColor;
+        }
+
+        hexagons.push({
+          id,
+          color,
+          x,
+          y,
+        });
+        id++;
+      }
+    }
+
+    return hexagons.slice(0, 400);
+  }, [numbers, redBoxIndices]);
+
+  // Calculate SVG dimensions with padding
+  const padding = 50;
+  const maxX = Math.max(...hexagons.map((h) => h.x)) + padding;
+  const maxY = Math.max(...hexagons.map((h) => h.y)) + padding;
+  const minX = Math.min(...hexagons.map((h) => h.x)) - padding;
+  const minY = Math.min(...hexagons.map((h) => h.y)) - padding;
 
   const handleValueChange = (newValue: number) => {
     const newNumbers = [...numbers];
@@ -165,40 +253,37 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Grid Container */}
+      {/* Hexagonal Grid Container */}
       <div className="flex-1 flex justify-center items-center p-3 sm:p-4 lg:p-6 min-h-0">
-        <div 
-          className="grid aspect-square rounded-xl overflow-hidden shadow-lg"
-          style={{
-            gridTemplateColumns: 'repeat(20, 1fr)',
-            gridTemplateRows: 'repeat(20, 1fr)',
-            width: 'min(calc(100vw - 1.5rem), calc(100vh - 8rem))',
-            height: 'min(calc(100vw - 1.5rem), calc(100vh - 8rem))'
-          }}
-        >
-          {Array.from({ length: 400 }, (_, index) => {
-            const number = numbers[index] || 500000; // Default value for empty boxes
-            const isRedBox = redBoxIndices.includes(index);
-            const isEmptyBox = index >= numbers.length;
-            const colorStyle = isRedBox 
-              ? { backgroundColor: 'hsl(0, 70%, 50%)' } 
-              : isEmptyBox 
-                ? { backgroundColor: 'hsl(0, 0%, 95%)' } // Light gray for empty boxes
-                : getBoxColor(number);
-            
-            return (
-              <div
-                key={index}
-                className={`
-                  ${selectedBoxIndex === index ? 'border-4 border-yellow-400' : ''}
-                  ${isRedBox || isEmptyBox ? 'cursor-not-allowed' : 'cursor-pointer'}
-                  transition-all duration-200
-                `}
-                style={colorStyle}
-                title={`Box ${index + 1}: ${isRedBox ? 'Red Box (Not Editable)' : isEmptyBox ? 'Empty Box' : number.toLocaleString()}`}
-              />
-            );
-          })}
+        <div className="w-full max-w-4xl mx-auto">
+          <svg
+            width={maxX - minX}
+            height={maxY - minY}
+            viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`}
+            className="w-full h-auto"
+          >
+            {hexagons.map((hexagon) => {
+              const isRedBox = redBoxIndices.includes(hexagon.id);
+              const isEmptyBox = hexagon.id >= numbers.length;
+              const isClickable = !isRedBox && !isEmptyBox;
+              
+              return (
+                <Hexagon
+                  key={hexagon.id}
+                  color={hexagon.color}
+                  x={hexagon.x}
+                  y={hexagon.y}
+                  size={15}
+                  isSelected={selectedBoxIndex === hexagon.id}
+                  onClick={() => {
+                    if (isClickable) {
+                      setSelectedBoxIndex(hexagon.id);
+                    }
+                  }}
+                />
+              );
+            })}
+          </svg>
         </div>
       </div>
 
