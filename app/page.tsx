@@ -58,8 +58,8 @@ function Hexagon({ color, x, y, size, isSelected, hasData, onClick }: HexagonPro
     <polygon
       points={points}
       fill={color}
-      stroke={isSelected ? "#fbbf24" : (hasData ? color : "#ffffff")}
-      strokeWidth={isSelected ? "3" : "1"}
+      stroke={hasData ? color : "#ffffff"}
+      strokeWidth="1"
       className="transition-all hover:opacity-80 cursor-pointer"
       onClick={onClick}
     />
@@ -311,18 +311,24 @@ export default function Home() {
             <div className="bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border border-gray-200 flex items-center space-x-6 sm:space-x-8">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full"></div>
-                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.mora.formatted}</div>
-                <div className="text-xs text-gray-500">Mora</div>
+                <div className="text-left">
+                  <div className="text-xs text-gray-500">Mora</div>
+                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.mora.formatted}</div>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full"></div>
-                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.donaciones.formatted}</div>
-                <div className="text-xs text-gray-500">Donaciones</div>
+                <div className="text-left">
+                  <div className="text-xs text-gray-500">Donaciones</div>
+                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.donaciones.formatted}</div>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-300 rounded-full border border-green-400"></div>
-                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.becas.formatted}</div>
-                <div className="text-xs text-gray-500">Becas</div>
+                <div className="text-left">
+                  <div className="text-xs text-gray-500">Becas</div>
+                  <div className="text-sm sm:text-base font-bold text-gray-900">{stats.becas.formatted}</div>
+                </div>
               </div>
             </div>
           );
@@ -330,29 +336,48 @@ export default function Home() {
       </div>
 
       {/* Bottom Toolbar - Absolute positioned at bottom */}
-      <div className="absolute bottom-4 left-4 right-4 z-10">
-        <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-lg px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Left - Total Budget */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-xs sm:text-sm text-gray-500">Presupuesto Mensual</div>
-                <div className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
-                  {formatAbbreviated(presupuestoTotal)}
-                </div>
-              </div>
-            </div>
-
-            {/* Right - Selected Student */}
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-10">
+        <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-xl sm:rounded-2xl px-4 py-2">
+          <div className="flex items-center space-x-4">
+            {/* Presupuesto */}
             <Drawer>
               <DrawerTrigger asChild>
-                <button className="px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold text-blue-600 bg-white border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                  {formatAbbreviated(aportes[selectedStudentIndex] || 0)}
+                <button className="text-left hover:bg-gray-50/80 rounded-lg px-2 py-2 cursor-pointer">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Presupuesto</div>
+                  <div className="text-lg font-bold text-gray-900 leading-tight">
+                    {formatAbbreviated(presupuestoTotal)}
+                  </div>
+                </button>
+              </DrawerTrigger>
+              <DrawerContent className="bg-white text-gray-900">
+                <DrawerTitle className="text-gray-900">
+                  Presupuesto Total
+                </DrawerTitle>
+                <div className="p-4">
+                  <div className="text-center mb-4">
+                    <div className="text-4xl font-bold mb-2 text-gray-900">
+                      ${presupuestoTotal.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-4">Total de Aportes Mensuales</div>
+                    <div className="text-sm text-gray-500">
+                      Basado en {aportes.length} estudiantes
+                    </div>
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
+
+            {/* Separator */}
+            <div className="w-px h-8 bg-gradient-to-b from-gray-200 to-gray-300"></div>
+
+            {/* Aporte */}
+            <Drawer>
+              <DrawerTrigger asChild>
+                <button className="text-left hover:bg-gray-50/80 rounded-lg px-2 py-2 cursor-pointer">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Aporte</div>
+                  <div className="text-lg font-bold text-gray-900 leading-tight">
+                    {formatAbbreviated(aportes[selectedStudentIndex] || 0)}
+                  </div>
                 </button>
               </DrawerTrigger>
               <DrawerContent className="bg-white text-gray-900">
