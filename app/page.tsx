@@ -1,400 +1,43 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-
-// Constants
-const TOTAL_STUDENTS = 400;
-const MORA_COUNT = 80;
-const STANDARD_PAYMENT = 500000;
-const MIN_PAYMENT = 100000;
-const MAX_PAYMENT = 1000000;
-const DATA_RADIUS = 11;
-
-// Color constants
-const COLORS = {
-  mora: 'hsl(15, 75%, 55%)',
-  donaciones: 'hsl(217, 80%, 45%)',
-  becas: 'hsl(142, 70%, 55%)',
-  background: 'hsl(0, 0%, 98%)',
-  backgroundBorder: 'hsl(0, 0%, 95%)',
-  empty: 'hsl(0, 0%, 95%)'
-} as const;
-
-// Helper to draw a hexagon on canvas
-function drawHexagon(
-  ctx: CanvasRenderingContext2D, 
-  x: number, 
-  y: number, 
-  size: number, 
-  color: string, 
-  hasData: boolean
-) {
-  const sqrt3_2 = size * Math.sqrt(3) / 2;
-  const halfSize = size / 2;
-
-  ctx.beginPath();
-  ctx.moveTo(x + size, y);
-  ctx.lineTo(x + halfSize, y - sqrt3_2);
-  ctx.lineTo(x - halfSize, y - sqrt3_2);
-  ctx.lineTo(x - size, y);
-  ctx.lineTo(x - halfSize, y + sqrt3_2);
-  ctx.lineTo(x + halfSize, y + sqrt3_2);
-  ctx.closePath();
-
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  ctx.strokeStyle = hasData ? color : COLORS.backgroundBorder;
-  ctx.lineWidth = 1;
-  ctx.stroke();
-}
-
-// Generate student payments
-const generateAportes = () => {
-  return Array.from({ length: TOTAL_STUDENTS }, () => {
-    // 90% pay standard amount (450k-600k)
-    if (Math.random() < 0.9) {
-      return STANDARD_PAYMENT + Math.floor(Math.random() * 100000) - 50000;
-    }
-    // 10% have scholarships or donations (100k-1.1M)
-    return Math.floor(Math.random() * MAX_PAYMENT) + MIN_PAYMENT;
-  });
-};
-
-// Generate overdue payment indices
-const generateMoraIndices = () => {
-  const indices = new Set<number>();
-  while (indices.size < MORA_COUNT) {
-    indices.add(Math.floor(Math.random() * TOTAL_STUDENTS));
-  }
-  return Array.from(indices);
-};
-
-// Color interpolation for payment values
-const getPaymentColor = (value: number) => {
-  const normalized = (value - MIN_PAYMENT) / (MAX_PAYMENT - MIN_PAYMENT);
-  const clamped = Math.max(0, Math.min(1, normalized));
-  
-  const colorStops = [
-    { h: 0, s: 0, l: 100 },      // White
-    { h: 142, s: 20, l: 95 },    // Light mint
-    { h: 142, s: 40, l: 85 },    // Medium mint
-    { h: 142, s: 60, l: 70 },    // Rich mint
-    { h: 200, s: 75, l: 50 },    // Teal-blue
-    { h: 217, s: 80, l: 45 }     // Deep blue
-  ];
-  
-  const stopIndex = clamped * (colorStops.length - 1);
-  const lower = colorStops[Math.floor(stopIndex)];
-  const upper = colorStops[Math.min(Math.floor(stopIndex) + 1, colorStops.length - 1)];
-  const t = stopIndex - Math.floor(stopIndex);
-  
-  const h = Math.round(lower.h + (upper.h - lower.h) * t);
-  const s = Math.round(lower.s + (upper.s - lower.s) * t);
-  const l = Math.round(lower.l + (upper.l - lower.l) * t);
-  
-  return `hsl(${h}, ${s}%, ${l}%)`;
-};
+import { useMemo } from 'react';
+import { useStudentData } from '@/lib/hooks/useStudentData';
+import { useDimensions } from '@/lib/hooks/useDimensions';
+import { calculatePaymentStats } from '@/lib/data-utils';
+import { StatsBar } from '@/components/StatsBar';
+import { Toolbar } from '@/components/Toolbar';
+import { HexagonCanvas } from '@/components/HexagonCanvas';
 
 export default function Home() {
-  const [aportes, setAportes] = useState<number[]>([]);
-  const [selectedStudentIndex, setSelectedStudentIndex] = useState<number>(0);
-  const [moraIndices, setMoraIndices] = useState<number[]>([]);
-  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const hexGridData = useRef<Array<{ x: number; y: number; size: number; dataIndex: number; hasData: boolean }>>([]);
-
-  useEffect(() => {
-    const aportes = generateAportes();
-    const moraIndices = generateMoraIndices();
-    
-    setAportes(aportes);
-    setMoraIndices(moraIndices);
-    
-    // Select random student (not in mora)
-    let randomIndex;
-    do {
-      randomIndex = Math.floor(Math.random() * TOTAL_STUDENTS);
-    } while (moraIndices.includes(randomIndex));
-    setSelectedStudentIndex(randomIndex);
-
-    // Handle window resize
-    const handleResize = () => {
-      setDimensions({ 
-        width: window.innerWidth, 
-        height: window.innerHeight 
-      });
-    };
-
-    handleResize(); // Set initial dimensions
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const { aportes, moraIndices, selectedStudentIndex, setSelectedStudentIndex, handleAporteChange } = useStudentData();
+  const dimensions = useDimensions();
 
   const presupuestoTotal = aportes.reduce((sum, aporte) => sum + aporte, 0);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Scale canvas for high-DPI displays
-    canvas.width = dimensions.width * window.devicePixelRatio;
-    canvas.height = dimensions.height * window.devicePixelRatio;
-    canvas.style.width = `${dimensions.width}px`;
-    canvas.style.height = `${dimensions.height}px`;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-    // Calculate available space
-    const statsHeight = dimensions.width < 640 ? 50 : 60;
-    const toolbarHeight = dimensions.width < 640 ? 60 : 80;
-    const topPadding = dimensions.width < 640 ? 20 : 40; // Increased padding
-    const bottomPadding = dimensions.width < 640 ? 30 : 52; // Increased padding
-    const sidePadding = dimensions.width < 640 ? 20 : 40; // Increased padding
-    
-    const availableHeight = dimensions.height - statsHeight - toolbarHeight - topPadding - bottomPadding;
-    const availableWidth = dimensions.width - (sidePadding * 2);
-    
-    // Calculate the total size of the hexagonal data cluster to determine max hex size
-    // Total height = hexSize * sqrt(3) * (2 * DATA_RADIUS + 1)
-    // Total width = hexSize * (3 * DATA_RADIUS + 2)
-    const clusterHeightFactor = Math.sqrt(3) * (2 * DATA_RADIUS + 1);
-    const clusterWidthFactor = (3 * DATA_RADIUS) + 2;
-
-    const maxHexSizeByHeight = availableHeight / clusterHeightFactor;
-    const maxHexSizeByWidth = availableWidth / clusterWidthFactor;
-    
-    const hexSize = Math.max(8, Math.min(35, maxHexSizeByHeight, maxHexSizeByWidth));
-    
-    const centerX = dimensions.width / 2;
-    // Center the grid within the available vertical space
-    const centerY = statsHeight + topPadding + availableHeight / 2;
-    
-    const HEX_WIDTH = hexSize * 1.5;
-    const HEX_HEIGHT = hexSize * Math.sqrt(3);
-
-    ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-    const newHexGridData = [];
-    let dataId = 0;
-
-    // Calculate loop bounds based on viewport
-    const viewportRadius = Math.ceil(Math.max(dimensions.width / HEX_WIDTH, dimensions.height / HEX_HEIGHT)) + 2;
-
-    for (let q = -viewportRadius; q <= viewportRadius; q++) {
-      const r1 = Math.max(-viewportRadius, -q - viewportRadius);
-      const r2 = Math.min(viewportRadius, -q + viewportRadius);
-
-      for (let r = r1; r <= r2; r++) {
-        const x = centerX + HEX_WIDTH * q;
-        const y = centerY + HEX_HEIGHT * (r + q / 2);
-
-        // Viewport Culling: Skip drawing if hexagon is outside the visible area
-        if (x + hexSize < 0 || x - hexSize > dimensions.width || y + hexSize < 0 || y - hexSize > dimensions.height) {
-          continue;
-        }
-
-        const hexDistance = (Math.abs(q) + Math.abs(r) + Math.abs(-q - r)) / 2;
-        const hasData = hexDistance <= DATA_RADIUS && dataId < TOTAL_STUDENTS;
-
-        let color: string;
-        if (hasData) {
-          const isEnMora = moraIndices.includes(dataId);
-          if (isEnMora) {
-            color = COLORS.mora;
-          } else {
-            color = getPaymentColor(aportes[dataId] || STANDARD_PAYMENT);
-          }
-          newHexGridData.push({ x, y, size: hexSize, dataIndex: dataId, hasData });
-          dataId++;
-        } else {
-          color = COLORS.background;
-        }
-
-        drawHexagon(ctx, x, y, hexSize, color, hasData);
-      }
-    }
-    hexGridData.current = newHexGridData;
-  }, [aportes, moraIndices, dimensions]);
-
-  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-
-    // Find clicked hexagon using simple distance check
-    for (const hex of hexGridData.current) {
-      const distance = Math.sqrt((clickX - hex.x) ** 2 + (clickY - hex.y) ** 2);
-      if (distance < hex.size) {
-        const dataIndex = hex.dataIndex;
-        const isClickable = hex.hasData && 
-                            !moraIndices.includes(dataIndex) && 
-                            dataIndex < aportes.length;
-        if (isClickable) {
-          setSelectedStudentIndex(dataIndex);
-        }
-        return; // Exit after finding the first match
-      }
-    }
-  };
-
-  const handleAporteChange = (newAporte: number) => {
-    setAportes(prev => {
-      const updated = [...prev];
-      updated[selectedStudentIndex] = newAporte;
-      return updated;
-    });
-  };
-
-
-  // Format numbers with abbreviations
-  const formatAbbreviated = (num: number) => {
-    if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
-    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
-    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-    return num.toString();
-  };
-
-  // Calculate payment statistics
   const stats = useMemo(() => {
-    const mora = aportes.filter((_, i) => moraIndices.includes(i));
-    const donaciones = aportes.filter((aporte, i) => !moraIndices.includes(i) && aporte > STANDARD_PAYMENT);
-    const becas = aportes.filter((aporte, i) => !moraIndices.includes(i) && aporte < STANDARD_PAYMENT);
-
-    return {
-      mora: {
-        sum: mora.reduce((sum, aporte) => sum + aporte, 0),
-        count: mora.length,
-        formatted: formatAbbreviated(mora.reduce((sum, aporte) => sum + aporte, 0))
-      },
-      donaciones: {
-        sum: donaciones.reduce((sum, aporte) => sum + (aporte - STANDARD_PAYMENT), 0),
-        count: donaciones.length,
-        formatted: '+' + formatAbbreviated(donaciones.reduce((sum, aporte) => sum + (aporte - STANDARD_PAYMENT), 0))
-      },
-      becas: {
-        sum: becas.reduce((sum, aporte) => sum + (STANDARD_PAYMENT - aporte), 0),
-        count: becas.length,
-        formatted: '-' + formatAbbreviated(becas.reduce((sum, aporte) => sum + (STANDARD_PAYMENT - aporte), 0))
-      }
-    };
+    return calculatePaymentStats(aportes, moraIndices);
   }, [aportes, moraIndices]);
 
   return (
     <div className="h-screen w-screen bg-gray-100 relative overflow-hidden">
       {/* Full Page Hexagonal Grid - covers entire viewport */}
-      <canvas 
-        ref={canvasRef} 
-        onClick={handleCanvasClick}
-        className="absolute inset-0 w-full h-full cursor-pointer"
+      <HexagonCanvas 
+        aportes={aportes}
+        moraIndices={moraIndices}
+        dimensions={dimensions}
+        onHexagonClick={setSelectedStudentIndex}
       />
 
       {/* Stats Section */}
-      <div className="absolute top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 sm:px-6 py-2 sm:py-3 shadow-lg border border-gray-200 flex items-center space-x-3 sm:space-x-6 md:space-x-8">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full" style={{backgroundColor: COLORS.mora}}></div>
-            <div className="text-left">
-              <div className="text-xs text-gray-500">Mora</div>
-              <div className="text-sm sm:text-base font-bold text-gray-900">{stats.mora.formatted}</div>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full" style={{backgroundColor: COLORS.donaciones}}></div>
-            <div className="text-left">
-              <div className="text-xs text-gray-500">Donaciones</div>
-              <div className="text-sm sm:text-base font-bold text-gray-900">{stats.donaciones.formatted}</div>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full border-2" style={{borderColor: COLORS.becas}}></div>
-            <div className="text-left">
-              <div className="text-xs text-gray-500">Becas</div>
-              <div className="text-sm sm:text-base font-bold text-gray-900">{stats.becas.formatted}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StatsBar stats={stats} />
 
       {/* Bottom Toolbar - Absolute positioned at bottom */}
-      <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10">
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg sm:rounded-xl md:rounded-2xl px-3 sm:px-4 py-2">
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            {/* Presupuesto */}
-            <Drawer>
-              <DrawerTrigger asChild>
-                <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Presupuesto</div>
-                  <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
-                    {formatAbbreviated(presupuestoTotal)}
-                  </div>
-                </button>
-              </DrawerTrigger>
-              <DrawerContent className="bg-white text-gray-900">
-                <DrawerTitle className="text-gray-900">
-                  Presupuesto Total
-                </DrawerTitle>
-                <div className="p-4">
-                  <div className="text-center mb-4">
-                    <div className="text-4xl font-bold mb-2 text-gray-900">
-                      ${presupuestoTotal.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-gray-600 mb-4">Total de Aportes Mensuales</div>
-                    <div className="text-sm text-gray-500">
-                      Basado en {aportes.length} estudiantes
-                    </div>
-                  </div>
-                </div>
-              </DrawerContent>
-            </Drawer>
-
-            {/* Separator */}
-            <div className="w-px h-8 bg-gradient-to-b from-gray-200 to-gray-300"></div>
-
-            {/* Aporte */}
-            <Drawer>
-              <DrawerTrigger asChild>
-                <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Aporte</div>
-                  <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
-                    {formatAbbreviated(aportes[selectedStudentIndex] || 0)}
-                  </div>
-                </button>
-              </DrawerTrigger>
-              <DrawerContent className="bg-white text-gray-900">
-                <DrawerTitle className="text-gray-900">
-                  Estudiante {selectedStudentIndex + 1}
-                </DrawerTitle>
-                <div className="p-4">
-                  <div className="text-center mb-4">
-                    <div className="text-4xl font-bold mb-2 text-gray-900">
-                      ${aportes[selectedStudentIndex]?.toLocaleString() || '0'}
-                    </div>
-                    <div className="text-sm text-gray-600 mb-4">Aporte Mensual</div>
-                    <input
-                      type="range"
-                      min={MIN_PAYMENT}
-                      max={MAX_PAYMENT}
-                      step="10000"
-                      value={aportes[selectedStudentIndex] || STANDARD_PAYMENT}
-                      onChange={(e) => handleAporteChange(Number(e.target.value))}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>$100K</span>
-                      <span>$1M</span>
-                    </div>
-                  </div>
-                </div>
-              </DrawerContent>
-            </Drawer>
-          </div>
-        </div>
-      </div>
+      <Toolbar 
+        presupuestoTotal={presupuestoTotal}
+        aportes={aportes}
+        selectedStudentIndex={selectedStudentIndex}
+        onAporteChange={handleAporteChange}
+      />
     </div>
   );
 }
