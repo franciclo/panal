@@ -6,15 +6,15 @@ import { Aporte } from "@/lib/types";
 interface ToolbarProps {
   presupuestoTotal: number;
   aportes: Aporte[][];
-  designatedUserIndex: number;
+  designatedFamiliaIndex: number;
   onAporteChange: (percentageChange: number) => void;
-  getUserAportesSum: (userIndex: number) => number;
-  getInitialUserAportesSum: (userIndex: number) => number;
+  getFamiliaAportesSum: (familiaIndex: number) => number;
+  getInitialFamiliaAportesSum: (familiaIndex: number) => number;
 }
 
-export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onAporteChange, getUserAportesSum, getInitialUserAportesSum }: ToolbarProps) {
-  const currentSum = getUserAportesSum(designatedUserIndex);
-  const initialSum = getInitialUserAportesSum(designatedUserIndex);
+export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onAporteChange, getFamiliaAportesSum, getInitialFamiliaAportesSum }: ToolbarProps) {
+  const currentSum = getFamiliaAportesSum(designatedFamiliaIndex);
+  const initialSum = getInitialFamiliaAportesSum(designatedFamiliaIndex);
 
   // This calculates the percentage *change* (e.g., -50, 0, +50) for the slider value
   const percentageChange = initialSum > 0 ? ((currentSum / initialSum) - 1) * 100 : 0;
@@ -60,7 +60,7 @@ export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onApor
               <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Aporte</div>
                 <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
-                  {formatAbbreviated(getUserAportesSum(designatedUserIndex))}
+                  {formatAbbreviated(getFamiliaAportesSum(designatedFamiliaIndex))}
                 </div>
               </button>
             </DrawerTrigger>
@@ -71,7 +71,7 @@ export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onApor
               <div className="p-4">
                 <div className="text-center mb-4">
                   <div className="text-4xl font-bold mb-2 text-gray-900">
-                    ${getUserAportesSum(designatedUserIndex).toLocaleString()}
+                    ${getFamiliaAportesSum(designatedFamiliaIndex).toLocaleString()}
                   </div>
                   <div className="text-sm text-gray-600 mb-2">Total de Aportes</div>
                   
@@ -79,7 +79,7 @@ export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onApor
                   <div className="mb-4">
                     <div className="text-sm font-medium text-gray-700 mb-2">Aportes Individuales:</div>
                     <div className="space-y-1">
-                      {aportes[designatedUserIndex]?.map((aporte, index) => (
+                      {aportes[designatedFamiliaIndex]?.map((aporte, index) => (
                         <div key={aporte.id} className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">
                           Aporte {index + 1}: ${aporte.value.toLocaleString()}
                         </div>
@@ -89,8 +89,8 @@ export function Toolbar({ presupuestoTotal, aportes, designatedUserIndex, onApor
 
                   {/* Percentage change */}
                   {(() => {
-                    const currentSum = getUserAportesSum(designatedUserIndex);
-                    const initialSum = getInitialUserAportesSum(designatedUserIndex);
+                    const currentSum = getFamiliaAportesSum(designatedFamiliaIndex);
+                    const initialSum = getInitialFamiliaAportesSum(designatedFamiliaIndex);
                     const percentageChange = initialSum > 0 ? ((currentSum - initialSum) / initialSum) * 100 : 0;
                     const isIncrease = percentageChange > 0;
                     const isDecrease = percentageChange < 0;

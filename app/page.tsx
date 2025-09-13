@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useStudentData } from '@/lib/hooks/useStudentData';
+import { useFamiliaData } from '@/lib/hooks/useStudentData';
 import { useDimensions } from '@/lib/hooks/useDimensions';
 import { calculatePaymentStats } from '@/lib/data-utils';
 import { StatsBar } from '@/components/StatsBar';
@@ -9,7 +9,7 @@ import { Toolbar } from '@/components/Toolbar';
 import { HexagonCanvas } from '@/components/HexagonCanvas';
 
 export default function Home() {
-  const { aportes, moraIndices, designatedUserIndex, handleAporteChange, getUserAportesSum, getInitialUserAportesSum } = useStudentData();
+  const { aportes, moraIndices, designatedFamiliaIndex, handleAporteChange, getFamiliaAportesSum, getInitialFamiliaAportesSum } = useFamiliaData();
   const dimensions = useDimensions();
 
   const presupuestoTotal = aportes.flat().reduce((sum, aporte) => sum + aporte.value, 0);
@@ -34,10 +34,10 @@ export default function Home() {
       <Toolbar 
         presupuestoTotal={presupuestoTotal}
         aportes={aportes}
-        designatedUserIndex={designatedUserIndex}
+        designatedFamiliaIndex={designatedFamiliaIndex}
         onAporteChange={handleAporteChange}
-        getUserAportesSum={getUserAportesSum}
-        getInitialUserAportesSum={getInitialUserAportesSum}
+        getFamiliaAportesSum={getFamiliaAportesSum}
+        getInitialFamiliaAportesSum={getInitialFamiliaAportesSum}
       />
     </div>
   );

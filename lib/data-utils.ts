@@ -1,33 +1,45 @@
-import { TOTAL_STUDENTS, MORA_COUNT, STANDARD_PAYMENT, MIN_PAYMENT, MAX_PAYMENT } from './constants';
+import { NUMBER_OF_FAMILIES, TOTAL_APORTES, MORA_COUNT, STANDARD_PAYMENT, MIN_PAYMENT, MAX_PAYMENT } from './constants';
 import { formatAbbreviated } from './format-utils';
 import type { PaymentStats, Aporte } from './types';
 
-// Generate student payments - now returns Aporte objects with unique IDs
+// Helper to create a single aporte
+const createAporte = (familiaIndex: number, aporteIndex: number): Aporte => {
+  let value: number;
+  if (Math.random() < 0.9) {
+    value = STANDARD_PAYMENT + Math.floor(Math.random() * 100000) - 50000;
+  } else {
+    value = Math.floor(Math.random() * MAX_PAYMENT) + MIN_PAYMENT;
+  }
+  return {
+    id: `familia-${familiaIndex}-aporte-${aporteIndex}`,
+    value,
+  };
+};
+
+// Generate family payments to ensure exactly TOTAL_APORTES are created
 export function generateAportes(): Aporte[][] {
-  return Array.from({ length: TOTAL_STUDENTS }, (_, studentIndex) => {
-    const aportesCount = Math.floor(Math.random() * 3) + 1; // 1-3 aportes per user
-    return Array.from({ length: aportesCount }, (_, aporteIndex) => {
-      let value: number;
-      // 90% pay standard amount (450k-600k)
-      if (Math.random() < 0.9) {
-        value = STANDARD_PAYMENT + Math.floor(Math.random() * 100000) - 50000;
-      } else {
-        // 10% have scholarships or donations (100k-1.1M)
-        value = Math.floor(Math.random() * MAX_PAYMENT) + MIN_PAYMENT;
-      }
-      return {
-        id: `student-${studentIndex}-aporte-${aporteIndex}`,
-        value,
-      };
-    });
+  const aportesByFamilia: Aporte[][] = Array.from({ length: NUMBER_OF_FAMILIES }, (_, familiaIndex) => {
+    // Each family starts with one aporte
+    return [createAporte(familiaIndex, 0)];
   });
+
+  const remainingAportes = TOTAL_APORTES - NUMBER_OF_FAMILIES;
+
+  for (let i = 0; i < remainingAportes; i++) {
+    // Add the remaining aportes to random families
+    const randomFamiliaIndex = Math.floor(Math.random() * NUMBER_OF_FAMILIES);
+    const newAporteIndex = aportesByFamilia[randomFamiliaIndex].length;
+    aportesByFamilia[randomFamiliaIndex].push(createAporte(randomFamiliaIndex, newAporteIndex));
+  }
+
+  return aportesByFamilia;
 }
 
-// Generate overdue payment indices
+// Generate overdue payment indices based on the number of families
 export function generateMoraIndices(): number[] {
   const indices = new Set<number>();
   while (indices.size < MORA_COUNT) {
-    indices.add(Math.floor(Math.random() * TOTAL_STUDENTS));
+    indices.add(Math.floor(Math.random() * NUMBER_OF_FAMILIES));
   }
   return Array.from(indices);
 }

@@ -76,17 +76,18 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
 
           let color: string;
           if (hasData) {
-            const studentIndex = aportes.findIndex(studentAportes => studentAportes.some(a => a.id === allAportes[aporteIdCounter].id));
-            const isEnMora = moraIndices.includes(studentIndex);
+            const familiaIndex = aportes.findIndex(familiaAportes => familiaAportes.some(a => a.id === allAportes[aporteIdCounter].id));
+            const isEnMora = moraIndices.includes(familiaIndex);
             
             color = isEnMora ? COLORS.mora : getPaymentColor(allAportes[aporteIdCounter].value);
 
             newHexGridData.push({ 
               x, y, size: hexSize, 
-              studentIndex: studentIndex,
+              familiaIndex: familiaIndex,
               aporteId: allAportes[aporteIdCounter].id,
               hasData 
             });
+            
             aporteIdCounter++;
           } else {
             color = COLORS.background;
@@ -98,16 +99,17 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
     } else {
         // Find changed aportes by comparing values, since IDs are stable
         const prevAportesFlat = prevAportes.current.flat();
+        
         const changedAportes = allAportes.filter(currentAporte => {
             const prevAporte = prevAportesFlat.find(p => p.id === currentAporte.id);
             return !prevAporte || prevAporte.value !== currentAporte.value;
         });
 
-        changedAportes.forEach(changedAporte => {
+        changedAportes.forEach((changedAporte) => {
             const hexToUpdate = hexGridData.current.find(h => h.aporteId === changedAporte.id);
             if (hexToUpdate) {
-                const studentIndex = hexToUpdate.studentIndex;
-                const isEnMora = moraIndices.includes(studentIndex);
+                const familiaIndex = hexToUpdate.familiaIndex;
+                const isEnMora = moraIndices.includes(familiaIndex);
                 const newColor = isEnMora ? COLORS.mora : getPaymentColor(changedAporte.value);
                 drawHexagon(ctx, hexToUpdate.x, hexToUpdate.y, hexToUpdate.size, newColor, true);
             }

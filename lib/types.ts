@@ -6,8 +6,8 @@ export interface Aporte {
   value: number;
 }
 
-export interface StudentData {
-  aportes: Aporte[]; // Now an array of Aporte objects
+export interface FamiliaData {
+  aportes: Aporte[]; // Array of aportes for this family
   isEnMora: boolean;
   index: number;
 }
@@ -16,7 +16,7 @@ export interface HexagonData {
   x: number;
   y: number;
   size: number;
-  studentIndex: number;
+  familiaIndex: number;
   aporteId: string; // The unique ID of the aporte this hexagon represents
   hasData: boolean;
 }
