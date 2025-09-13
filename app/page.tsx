@@ -3,28 +3,28 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 
-// Generate 400 numbers, most around 500000 with some variation
-const generateNumbers = () => {
+// Generate 400 student monthly payments (aportes)
+const generateAportes = () => {
   return Array.from({ length: 400 }, (_, index) => {
-    // Most boxes (90%) should be around 500000
+    // Most students (90%) pay around the standard amount
     if (Math.random() < 0.9) {
       return 500000 + Math.floor(Math.random() * 100000) - 50000; // 450000 to 600000
     }
-    // Some boxes (10%) can be more varied
+    // Some students (10%) have scholarships (becas) or donations (donaciones)
     return Math.floor(Math.random() * 1000000) + 100000; // 100000 to 1100000
   });
 };
 
-// Generate random red box indices (approximately 80 red boxes)
-const generateRedBoxIndices = () => {
-  const redBoxIndices = new Set<number>();
-  const targetCount = 80;
+// Generate random overdue payment indices (aportes en mora)
+const generateMoraIndices = () => {
+  const moraIndices = new Set<number>();
+  const targetCount = 80; // Approximately 80 students with overdue payments
   
-  while (redBoxIndices.size < targetCount) {
-    redBoxIndices.add(Math.floor(Math.random() * 400));
+  while (moraIndices.size < targetCount) {
+    moraIndices.add(Math.floor(Math.random() * 400));
   }
   
-  return Array.from(redBoxIndices);
+  return Array.from(moraIndices);
 };
 
 // Hexagon component for SVG rendering
@@ -111,21 +111,21 @@ const getBoxColor = (value: number) => {
 };
 
 export default function Home() {
-  const [numbers, setNumbers] = useState<number[]>([]);
-  const [selectedBoxIndex, setSelectedBoxIndex] = useState<number>(0);
-  const [redBoxIndices, setRedBoxIndices] = useState<number[]>([]);
+  const [aportes, setAportes] = useState<number[]>([]);
+  const [selectedStudentIndex, setSelectedStudentIndex] = useState<number>(0);
+  const [moraIndices, setMoraIndices] = useState<number[]>([]);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
 
   useEffect(() => {
-    setNumbers(generateNumbers());
-    setRedBoxIndices(generateRedBoxIndices());
+    setAportes(generateAportes());
+    setMoraIndices(generateMoraIndices());
     
-    // Set random selected box index (0 to 399), but not a red box
+    // Set random selected student index (0 to 399), but not one in mora
     let randomIndex;
     do {
       randomIndex = Math.floor(Math.random() * 400);
-    } while (redBoxIndices.includes(randomIndex));
-    setSelectedBoxIndex(randomIndex);
+    } while (moraIndices.includes(randomIndex));
+    setSelectedStudentIndex(randomIndex);
 
     // Set initial dimensions
     setDimensions({ width: window.innerWidth, height: window.innerHeight });
@@ -139,7 +139,7 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const totalSum = numbers.reduce((sum, num) => sum + num, 0);
+  const presupuestoTotal = aportes.reduce((sum, aporte) => sum + aporte, 0);
 
   // Generate hexagonal grid with mathematical precision
   const hexagons = useMemo(() => {
@@ -180,16 +180,16 @@ export default function Home() {
         // Determine color
         let color: string;
         if (hasData) {
-          const number = numbers[dataId] || 500000;
-          const isRedBox = redBoxIndices.includes(dataId);
-          const isEmptyBox = dataId >= numbers.length;
+          const aporte = aportes[dataId] || 500000;
+          const isEnMora = moraIndices.includes(dataId);
+          const isEmptyBox = dataId >= aportes.length;
           
-          if (isRedBox) {
-            color = 'hsl(0, 70%, 50%)';
+          if (isEnMora) {
+            color = 'hsl(0, 70%, 50%)'; // Red for overdue payments
           } else if (isEmptyBox) {
             color = 'hsl(0, 0%, 95%)';
           } else {
-            color = getBoxColor(number).backgroundColor;
+            color = getBoxColor(aporte).backgroundColor;
           }
           dataId++;
         } else {
@@ -209,7 +209,7 @@ export default function Home() {
     }
 
     return hexagons;
-  }, [numbers, redBoxIndices, dimensions]);
+  }, [aportes, moraIndices, dimensions]);
 
   // Calculate SVG dimensions and hex size with extended padding for infinite background
   const padding = 200; // Increased padding to accommodate extended grid
@@ -219,10 +219,10 @@ export default function Home() {
   const minY = -padding;
   const hexSize = Math.max(12, Math.min(35, Math.min(dimensions.width, dimensions.height) / 25));
 
-  const handleValueChange = (newValue: number) => {
-    const newNumbers = [...numbers];
-    newNumbers[selectedBoxIndex] = newValue;
-    setNumbers(newNumbers);
+  const handleAporteChange = (newAporte: number) => {
+    const newAportes = [...aportes];
+    newAportes[selectedStudentIndex] = newAporte;
+    setAportes(newAportes);
   };
 
 
@@ -238,31 +238,31 @@ export default function Home() {
     return num.toString();
   };
 
-  // Calculate statistics for different box categories
+  // Calculate statistics for different student payment categories
   const calculateStats = () => {
-    const redBoxes = numbers.filter((_, index) => redBoxIndices.includes(index));
-    const over500kBoxes = numbers.filter((value, index) => !redBoxIndices.includes(index) && value > 500000);
-    const under500kBoxes = numbers.filter((value, index) => !redBoxIndices.includes(index) && value < 500000);
+    const aportesEnMora = aportes.filter((_, index) => moraIndices.includes(index));
+    const donaciones = aportes.filter((aporte, index) => !moraIndices.includes(index) && aporte > 500000);
+    const becas = aportes.filter((aporte, index) => !moraIndices.includes(index) && aporte < 500000);
 
-    const redBoxSum = redBoxes.reduce((sum, value) => sum + value, 0);
-    const surplusSum = over500kBoxes.reduce((sum, value) => sum + (value - 500000), 0);
-    const charitySum = under500kBoxes.reduce((sum, value) => sum + (500000 - value), 0);
+    const moraSum = aportesEnMora.reduce((sum, aporte) => sum + aporte, 0);
+    const donacionSum = donaciones.reduce((sum, aporte) => sum + (aporte - 500000), 0);
+    const becaSum = becas.reduce((sum, aporte) => sum + (500000 - aporte), 0);
 
     return {
-      redBoxes: {
-        sum: redBoxSum,
-        count: redBoxes.length,
-        formatted: formatAbbreviated(redBoxSum)
+      mora: {
+        sum: moraSum,
+        count: aportesEnMora.length,
+        formatted: formatAbbreviated(moraSum)
       },
-      surplus: {
-        sum: surplusSum,
-        count: over500kBoxes.length,
-        formatted: '+' + formatAbbreviated(surplusSum)
+      donaciones: {
+        sum: donacionSum,
+        count: donaciones.length,
+        formatted: '+' + formatAbbreviated(donacionSum)
       },
-      charity: {
-        sum: charitySum,
-        count: under500kBoxes.length,
-        formatted: '-' + formatAbbreviated(charitySum)
+      becas: {
+        sum: becaSum,
+        count: becas.length,
+        formatted: '-' + formatAbbreviated(becaSum)
       }
     };
   };
@@ -280,8 +280,8 @@ export default function Home() {
           {hexagons.map((hexagon) => {
             const dataIndex = hexagon.dataIndex;
             const isClickable = hexagon.hasData && 
-              !redBoxIndices.includes(dataIndex) && 
-              dataIndex < numbers.length;
+              !moraIndices.includes(dataIndex) && 
+              dataIndex < aportes.length;
             
             return (
               <Hexagon
@@ -290,11 +290,11 @@ export default function Home() {
                 x={hexagon.x}
                 y={hexagon.y}
                 size={hexSize}
-                isSelected={selectedBoxIndex === dataIndex}
+                isSelected={selectedStudentIndex === dataIndex}
                 hasData={hexagon.hasData}
                 onClick={() => {
                   if (isClickable) {
-                    setSelectedBoxIndex(dataIndex);
+                    setSelectedStudentIndex(dataIndex);
                   }
                 }}
               />
@@ -311,15 +311,18 @@ export default function Home() {
             <div className="bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border border-gray-200 flex items-center space-x-6 sm:space-x-8">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full"></div>
-                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.redBoxes.formatted}</div>
+                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.mora.formatted}</div>
+                <div className="text-xs text-gray-500">Mora</div>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded-full"></div>
-                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.surplus.formatted}</div>
+                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.donaciones.formatted}</div>
+                <div className="text-xs text-gray-500">Donaciones</div>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-300 rounded-full border border-green-400"></div>
-                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.charity.formatted}</div>
+                <div className="text-sm sm:text-base font-bold text-gray-900">{stats.becas.formatted}</div>
+                <div className="text-xs text-gray-500">Becas</div>
               </div>
             </div>
           );
@@ -330,49 +333,50 @@ export default function Home() {
       <div className="absolute bottom-4 left-4 right-4 z-10">
         <div className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-lg px-4 py-3">
           <div className="flex items-center justify-between">
-            {/* Left - Total */}
+            {/* Left - Total Budget */}
             <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
               <div>
-                <div className="text-xs sm:text-sm text-gray-500">Total</div>
+                <div className="text-xs sm:text-sm text-gray-500">Presupuesto Mensual</div>
                 <div className="text-base sm:text-lg lg:text-xl font-bold text-gray-900">
-                  {formatAbbreviated(totalSum)}
+                  {formatAbbreviated(presupuestoTotal)}
                 </div>
               </div>
             </div>
 
-            {/* Right - Selected Box */}
+            {/* Right - Selected Student */}
             <Drawer>
               <DrawerTrigger asChild>
                 <button className="px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold text-blue-600 bg-white border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                  {formatAbbreviated(numbers[selectedBoxIndex] || 0)}
+                  {formatAbbreviated(aportes[selectedStudentIndex] || 0)}
                 </button>
               </DrawerTrigger>
               <DrawerContent className="bg-white text-gray-900">
                 <DrawerTitle className="text-gray-900">
-                  Box {selectedBoxIndex + 1}
+                  Estudiante {selectedStudentIndex + 1}
                 </DrawerTitle>
                 <div className="p-4">
                   <div className="text-center mb-4">
                     <div className="text-4xl font-bold mb-2 text-gray-900">
-                      {numbers[selectedBoxIndex]?.toLocaleString() || '0'}
+                      ${aportes[selectedStudentIndex]?.toLocaleString() || '0'}
                     </div>
+                    <div className="text-sm text-gray-600 mb-4">Aporte Mensual</div>
                     <input
                       type="range"
                       min="100000"
                       max="1000000"
                       step="10000"
-                      value={numbers[selectedBoxIndex] || 500000}
-                      onChange={(e) => handleValueChange(Number(e.target.value))}
+                      value={aportes[selectedStudentIndex] || 500000}
+                      onChange={(e) => handleAporteChange(Number(e.target.value))}
                       className="w-full"
                     />
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>100K</span>
-                      <span>1M</span>
+                      <span>$100K</span>
+                      <span>$1M</span>
                     </div>
                   </div>
                 </div>
