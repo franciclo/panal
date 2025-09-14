@@ -1,7 +1,7 @@
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Slider } from "@/components/ui/slider";
 import { formatAbbreviated } from '@/lib/format-utils';
-import { MIN_PAYMENT, MAX_PAYMENT } from '@/lib/constants';
+import { MIN_PAYMENT, MAX_PAYMENT, BUDGET } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
 
 interface ToolbarProps {
@@ -29,8 +29,11 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
             <DrawerTrigger asChild>
               <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Presupuesto</div>
-                <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
-                  {formatAbbreviated(presupuestoTotal)}
+                <div className="flex items-center">
+                  <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
+                    {formatAbbreviated(presupuestoTotal)}
+                  </div>
+                  <div className={`w-2 h-2 rounded-full ml-2 ${presupuestoTotal >= BUDGET ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 </div>
               </button>
             </DrawerTrigger>
