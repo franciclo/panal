@@ -1,7 +1,7 @@
 // Application constants
 export const NUMBER_OF_FAMILIES = 300; // The number of families contributing
 export const TOTAL_APORTES = 400;      // The total number of aportes (kids) to visualize
-export const MORA_COUNT = 80;
+export const MORA_COUNT = 40;
 export const STANDARD_PAYMENT = 500000;
 export const MIN_PAYMENT = 100000;
 export const MAX_PAYMENT = 1000000;

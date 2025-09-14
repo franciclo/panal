@@ -8,7 +8,7 @@ interface StatsBarProps {
 export function StatsBar({ stats }: StatsBarProps) {
   return (
     <div className="absolute top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-10">
-      <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 sm:px-6 py-2 sm:py-3 shadow-lg border border-gray-200 flex items-center space-x-3 sm:space-x-6 md:space-x-8">
+      <div className="bg-white/90 backdrop-blur-sm rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-lg border border-gray-200 flex items-center space-x-3 sm:space-x-6 md:space-x-8">
         <div className="flex items-center space-x-2">
           <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full" style={{backgroundColor: COLORS.mora}}></div>
           <div className="text-left">
