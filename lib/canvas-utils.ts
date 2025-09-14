@@ -1,7 +1,6 @@
-import { COLORS } from './constants';
+import { COLORS, TOTAL_APORTES } from './constants';
 import type { HexagonData } from './types';
 
-// Helper to draw a hexagon on canvas
 export function drawHexagon(
   ctx: CanvasRenderingContext2D, 
   x: number, 
@@ -30,7 +29,6 @@ export function drawHexagon(
   ctx.stroke();
 }
 
-// Calculate hexagon grid layout
 export function calculateHexagonGrid(dimensions: any, hexSize: number) {
   const centerX = dimensions.width / 2;
   const statsHeight = dimensions.width < 640 ? 50 : 60;
@@ -54,28 +52,74 @@ export function calculateHexagonGrid(dimensions: any, hexSize: number) {
   };
 }
 
-/**
- * Checks if a hexagon at a given axial coordinate is inside the main grid shape.
- * @param q - The q axial coordinate.
- * @param r - The r axial coordinate.
- * @param radius - The radius of the grid shape.
- * @returns True if the coordinate is inside the shape, false otherwise.
- */
-export function isInGridShape(q: number, r: number, radius: number): boolean {
-  const s = -q - r;
+let cachedShape: Array<{q: number, r: number}> | null = null;
+let cachedShapeSet: Set<string> | null = null;
 
+function isInStarShape(q: number, r: number, radius: number): boolean {
+  const s = -q - r;
+  
   if (Math.max(Math.abs(q), Math.abs(r), Math.abs(s)) > radius) {
     return false;
   }
-
+  
   const cornerCutoff = Math.ceil(radius / 2);
-  if (
+  return !(
     Math.abs(q - r) > radius + cornerCutoff ||
     Math.abs(r - s) > radius + cornerCutoff ||
     Math.abs(s - q) > radius + cornerCutoff
-  ) {
-    return false;
-  }
+  );
+}
 
-  return true;
+function generateCenterOutwardHexagons(targetCount: number): Array<{q: number, r: number}> {
+  // Start with a reasonable radius and increase until we have enough hexagons
+  let radius = Math.ceil((-3 + Math.sqrt(9 + 12 * (targetCount - 1))) / 6);
+  let validHexagons: Array<{q: number, r: number, distance: number}> = [];
+  
+  while (validHexagons.length < targetCount) {
+    validHexagons = [];
+    const viewportRadius = radius + 2;
+    
+    for (let q = -viewportRadius; q <= viewportRadius; q++) {
+      const r1 = Math.max(-viewportRadius, -q - viewportRadius);
+      const r2 = Math.min(viewportRadius, -q + viewportRadius);
+      
+      for (let r = r1; r <= r2; r++) {
+        if (isInStarShape(q, r, radius)) {
+          const distance = Math.sqrt(q * q + r * r + q * r);
+          validHexagons.push({q, r, distance});
+        }
+      }
+    }
+    
+    if (validHexagons.length < targetCount) {
+      radius++;
+    }
+  }
+  
+  // Sort by distance from center, then by angle for symmetry
+  validHexagons.sort((a, b) => {
+    if (Math.abs(a.distance - b.distance) < 0.1) {
+      const angleA = Math.atan2(a.r, a.q);
+      const angleB = Math.atan2(b.r, b.q);
+      return angleA - angleB;
+    }
+    return a.distance - b.distance;
+  });
+  
+  return validHexagons.slice(0, targetCount).map(h => ({q: h.q, r: h.r}));
+}
+
+export function getOptimalShape(targetCount: number) {
+  if (!cachedShape) {
+    cachedShape = generateCenterOutwardHexagons(targetCount);
+    cachedShapeSet = new Set(cachedShape.map(h => `${h.q},${h.r}`));
+    console.log(`Center-outward shape: ${cachedShape.length} hexagons for ${targetCount} aportes`);
+  }
+  
+  return cachedShape;
+}
+
+export function isInGridShape(q: number, r: number, radius: number): boolean {
+  getOptimalShape(TOTAL_APORTES); // Ensure cache is populated
+  return cachedShapeSet!.has(`${q},${r}`);
 }

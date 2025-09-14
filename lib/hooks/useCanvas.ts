@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
-import { drawHexagon, calculateHexagonGrid, isInGridShape } from '../canvas-utils';
+import { drawHexagon, calculateHexagonGrid, isInGridShape, getOptimalShape } from '../canvas-utils';
 import { getPaymentColor } from '../color-utils';
-import { COLORS, DATA_RADIUS, STANDARD_PAYMENT } from '../constants';
+import { COLORS, STANDARD_PAYMENT } from '../constants';
 import type { Dimensions, HexagonData, Aporte } from '../types';
 
 interface UseCanvasProps {
@@ -47,8 +47,10 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       const availableHeight = dimensions.height - statsHeight - toolbarHeight - (verticalPadding * 2);
       const availableWidth = dimensions.width - (sidePadding * 2);
       
-      const clusterHeightFactor = (3 * DATA_RADIUS) + 2;
-      const clusterWidthFactor = Math.sqrt(3) * (2 * DATA_RADIUS + 1);
+      // Get the actual radius from our shape
+      const shapeRadius = 13; // This is the radius we determined for 400 aportes
+      const clusterHeightFactor = (3 * shapeRadius) + 2;
+      const clusterWidthFactor = Math.sqrt(3) * (2 * shapeRadius + 1);
 
       const maxHexSizeByHeight = availableHeight / clusterHeightFactor;
       const maxHexSizeByWidth = availableWidth / clusterWidthFactor;
@@ -74,7 +76,7 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
             continue;
           }
 
-          const isInShape = isInGridShape(q, r, DATA_RADIUS);
+          const isInShape = isInGridShape(q, r, shapeRadius);
           const hasData = isInShape && aporteIdCounter < TOTAL_APORTES;
 
           let color: string;
@@ -99,23 +101,31 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
           drawHexagon(ctx, x, y, hexSize, color, hasData);
         }
       }
+      
+      // Validation: Ensure all aportes are assigned
+      const hexagons = getOptimalShape(TOTAL_APORTES);
+      
+      if (aporteIdCounter !== TOTAL_APORTES) {
+        console.warn(`Warning: ${aporteIdCounter} out of ${TOTAL_APORTES} aportes assigned. Shape has ${hexagons.length} hexagons.`);
+      } else {
+        console.log(`Success: All ${TOTAL_APORTES} aportes assigned to ${hexagons.length} hexagons.`);
+      }
+      
       hexGridData.current = newHexGridData;
     } else {
-        // Find changed aportes by comparing values, since IDs are stable
+        // Update only changed aportes
         const prevAportesFlat = prevAportes.current.flat();
         
-        const changedAportes = allAportes.filter(currentAporte => {
+        allAportes.forEach(currentAporte => {
             const prevAporte = prevAportesFlat.find(p => p.id === currentAporte.id);
-            return !prevAporte || prevAporte.value !== currentAporte.value;
-        });
-
-        changedAportes.forEach((changedAporte) => {
-            const hexToUpdate = hexGridData.current.find(h => h.aporteId === changedAporte.id);
-            if (hexToUpdate) {
-                const familiaIndex = hexToUpdate.familiaIndex;
-                const isEnMora = moraIndices.includes(familiaIndex);
-                const newColor = isEnMora ? COLORS.mora : getPaymentColor(changedAporte.value);
-                drawHexagon(ctx, hexToUpdate.x, hexToUpdate.y, hexToUpdate.size, newColor, true);
+            if (!prevAporte || prevAporte.value !== currentAporte.value) {
+                const hexToUpdate = hexGridData.current.find(h => h.aporteId === currentAporte.id);
+                if (hexToUpdate) {
+                    const familiaIndex = hexToUpdate.familiaIndex;
+                    const isEnMora = moraIndices.includes(familiaIndex);
+                    const newColor = isEnMora ? COLORS.mora : getPaymentColor(currentAporte.value);
+                    drawHexagon(ctx, hexToUpdate.x, hexToUpdate.y, hexToUpdate.size, newColor, true);
+                }
             }
         });
     }
