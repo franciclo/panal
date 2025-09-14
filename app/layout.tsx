@@ -13,9 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Box Grid App",
-  description: "Interactive grid of 400 boxes with dynamic coloring",
+  title: "Panal",
+  description: "Visualización de economia asociativa de escuela",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
