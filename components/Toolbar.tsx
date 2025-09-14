@@ -1,7 +1,7 @@
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Slider } from "@/components/ui/slider";
 import { formatAbbreviated } from '@/lib/format-utils';
-import { MIN_PAYMENT, MAX_PAYMENT, BUDGET } from '@/lib/constants';
+import { BUDGET } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
 
 interface ToolbarProps {
@@ -19,6 +19,9 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
 
   // This calculates the percentage *change* (e.g., -50, 0, +50) for the slider value
   const percentageChange = initialSum > 0 ? ((currentSum / initialSum) - 1) * 100 : 0;
+  
+  // Calculate balance: presupuestoTotal - BUDGET
+  const balance = presupuestoTotal - BUDGET;
   
   return (
     <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10" style={{bottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
@@ -47,6 +50,18 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
                     ${presupuestoTotal.toLocaleString()}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">Total de Aportes Mensuales</div>
+                  
+                  {/* Balance Display */}
+                  <div className="mb-4">
+                    <div className="text-sm font-medium text-gray-700 mb-1">Balance:</div>
+                    <div className={`text-lg font-semibold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {balance >= 0 ? '+' : ''}${balance.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Presupuesto: ${BUDGET.toLocaleString()}
+                    </div>
+                  </div>
+                  
                   <div className="text-sm text-gray-500">
                     Basado en {aportes.length} familias ({aportes.flat().length} aportes)
                   </div>
