@@ -76,17 +76,19 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
                   </div>
                   <div className="text-sm text-gray-600 mb-2">Total de Aportes</div>
                   
-                  {/* Individual aportes */}
-                  <div className="mb-4">
-                    <div className="text-sm font-medium text-gray-700 mb-2">Aportes Individuales:</div>
-                    <div className="space-y-1">
-                      {aportes[designatedFamiliaIndex]?.map((aporte, index) => (
-                        <div key={aporte.id} className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                          Aporte {index + 1}: ${aporte.value.toLocaleString()}
-                        </div>
-                      ))}
+                  {/* Individual aportes - only show if more than one */}
+                  {aportes[designatedFamiliaIndex] && aportes[designatedFamiliaIndex].length > 1 && (
+                    <div className="mb-4">
+                      <div className="text-sm font-medium text-gray-700 mb-2">Aportes Individuales:</div>
+                      <div className="space-y-1">
+                        {aportes[designatedFamiliaIndex]?.map((aporte, index) => (
+                          <div key={aporte.id} className="text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                            Aporte {index + 1}: ${aporte.value.toLocaleString()}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Percentage change */}
                   {(() => {
