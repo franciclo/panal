@@ -5,7 +5,11 @@ export const MORA_COUNT = 80;
 export const STANDARD_PAYMENT = 500000;
 export const MIN_PAYMENT = 100000;
 export const MAX_PAYMENT = 1000000;
-export const DATA_RADIUS = 11; // Optimal radius for a symmetrical 400-item grid
+
+// Calculate the required radius for the hexagonal grid based on TOTAL_APORTES
+// Formula: 3r² + 3r + 1 = TOTAL_APORTES
+// Solving for r: r = (-3 + sqrt(9 + 12(TOTAL_APORTES - 1))) / 6
+export const DATA_RADIUS = Math.ceil((-3 + Math.sqrt(9 + 12 * (TOTAL_APORTES - 1))) / 6);
 
 // Color constants
 export const COLORS = {

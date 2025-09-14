@@ -45,7 +45,7 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
                   </div>
                   <div className="text-sm text-gray-600 mb-4">Total de Aportes Mensuales</div>
                   <div className="text-sm text-gray-500">
-                    Basado en {aportes.length} estudiantes
+                    Basado en {aportes.length} familias ({aportes.flat().length} aportes)
                   </div>
                 </div>
               </div>

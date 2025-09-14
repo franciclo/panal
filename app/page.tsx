@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useFamiliaData } from '@/lib/hooks/useStudentData';
+import { useFamiliaData } from '@/lib/hooks/useFamiliaData';
 import { useDimensions } from '@/lib/hooks/useDimensions';
 import { calculatePaymentStats } from '@/lib/data-utils';
 import { StatsBar } from '@/components/StatsBar';
