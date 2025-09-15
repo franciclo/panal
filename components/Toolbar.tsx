@@ -4,6 +4,50 @@ import { formatAbbreviated } from '@/lib/format-utils';
 import { BUDGET } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
 
+// Mock data for previous months
+const MONTHS_DATA = [
+  {
+    month: "Enero 2024",
+    presupuesto: 185000000,
+    aporte: 450000
+  },
+  {
+    month: "Febrero 2024", 
+    presupuesto: 192000000,
+    aporte: 480000
+  },
+  {
+    month: "Marzo 2024",
+    presupuesto: 198000000,
+    aporte: 495000
+  },
+  {
+    month: "Abril 2024",
+    presupuesto: 201000000,
+    aporte: 502000
+  },
+  {
+    month: "Mayo 2024",
+    presupuesto: 195000000,
+    aporte: 487000
+  },
+  {
+    month: "Junio 2024",
+    presupuesto: 203000000,
+    aporte: 507000
+  }
+];
+
+// Get current month in Spanish
+const getCurrentMonth = () => {
+  const now = new Date();
+  const months = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  return months[now.getMonth()];
+};
+
 interface ToolbarProps {
   presupuestoTotal: number;
   aportes: Aporte[][];
@@ -27,6 +71,109 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
     <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10" style={{bottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
       <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg sm:rounded-xl md:rounded-2xl px-3 sm:px-4 py-2">
         <div className="flex items-center space-x-2 sm:space-x-4">
+          {/* Month Selector */}
+          <Drawer>
+            <DrawerTrigger asChild>
+              <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
+                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Mes</div>
+                <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
+                  {getCurrentMonth()}
+                </div>
+              </button>
+            </DrawerTrigger>
+            <DrawerContent className="bg-white text-gray-900">
+              <DrawerTitle className="text-gray-900">
+                {/* Historial de Meses */}
+              </DrawerTitle>
+              <div className="p-4">
+                <div className="space-y-4">
+                  {/* Subtle Headers */}
+                  <div className="flex justify-center">
+                    <div className="px-3 sm:px-4 py-1">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
+                        <div className="w-4"></div>
+                        <div className="w-20 text-xs font-medium text-gray-400 uppercase tracking-wide text-center">Mes</div>
+                        <div className="w-28 text-xs font-medium text-gray-400 uppercase tracking-wide text-center">Presupuesto</div>
+                        <div className="w-24 text-xs font-medium text-gray-400 uppercase tracking-wide text-center">Aporte</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Historical Months */}
+                  {MONTHS_DATA.map((monthData, index) => (
+                    <div key={index} className="flex justify-center">
+                      <div className="px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-50/80 cursor-pointer transition-colors">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          {/* Disabled Check */}
+                          <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                          </div>
+
+                          {/* Month */}
+                          <div className="w-20 text-center">
+                            <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
+                              {monthData.month.split(' ')[0]}
+                            </div>
+                          </div>
+
+                          {/* Presupuesto */}
+                          <div className="w-28 text-center">
+                            <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
+                              {formatAbbreviated(monthData.presupuesto)}
+                            </div>
+                          </div>
+
+                          {/* Aporte */}
+                          <div className="w-24 text-center">
+                            <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
+                              {formatAbbreviated(monthData.aporte)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Current Month */}
+                  <div className="flex justify-center">
+                    <div className="px-3 sm:px-4 py-2 rounded-lg bg-blue-50 border border-blue-200 cursor-pointer transition-colors">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
+                        {/* Active Check */}
+                        <div className="w-4 h-4 rounded-full border-2 border-blue-500 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        </div>
+
+                        {/* Month */}
+                        <div className="w-20 text-center">
+                          <div className="text-sm sm:text-lg font-bold text-blue-900 leading-tight">
+                            {getCurrentMonth()}
+                          </div>
+                        </div>
+
+                        {/* Presupuesto */}
+                        <div className="w-28 text-center">
+                          <div className="text-sm sm:text-lg font-bold text-blue-900 leading-tight">
+                            {formatAbbreviated(presupuestoTotal)}
+                          </div>
+                        </div>
+
+                        {/* Aporte */}
+                        <div className="w-24 text-center">
+                          <div className="text-sm sm:text-lg font-bold text-blue-900 leading-tight">
+                            {formatAbbreviated(getFamiliaAportesSum(designatedFamiliaIndex))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
+
+          {/* Separator */}
+          <div className="w-px h-8 bg-gradient-to-b from-gray-200 to-gray-300"></div>
+
           {/* Presupuesto */}
           <Drawer>
             <DrawerTrigger asChild>
