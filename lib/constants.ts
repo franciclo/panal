@@ -12,11 +12,11 @@ export const MAX_PAYMENT = 1000000;
 // Solving for r: r = (-3 + sqrt(9 + 12(TOTAL_APORTES - 1))) / 6
 export const DATA_RADIUS = Math.ceil((-3 + Math.sqrt(9 + 12 * (TOTAL_APORTES - 1))) / 6);
 
-// Color constants - Honeycomb theme (more vibrant)
+// Color constants - Honeycomb theme (updated with new palette)
 export const COLORS = {
   mora: 'hsl(52, 50%, 14%)',        // #312f17 - Dark honeycomb (increased saturation)
-  donaciones: 'hsl(45, 85%, 59%)',  // #ea9d3e - Orange honeycomb (increased saturation)
-  becas: 'hsl(50, 85%, 65%)',       // #e5ac3f - Light honeycomb (increased saturation)
+  donaciones: 'hsl(35, 90%, 38%)',  // Dark golden brown (#BF7802) - deep orange brown
+  becas: 'hsl(40, 85%, 84%)',       // Peach (#F9E2B3) - lightest honeycomb color
   border: 'hsl(50, 85%, 75%)',      // #e5bd3f - Lightest honeycomb for borders
   background: 'hsl(0, 0%, 98%)',
   backgroundBorder: 'hsl(0, 0%, 95%)',

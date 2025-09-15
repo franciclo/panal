@@ -24,7 +24,7 @@ export function StatsBar({ stats }: StatsBarProps) {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full border-2" style={{borderColor: COLORS.becas}}></div>
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full" style={{backgroundColor: COLORS.becas}}></div>
           <div className="text-left">
             <div className="text-xs text-gray-500">Becas</div>
             <div className="text-sm sm:text-base font-bold text-gray-900">{stats.becas.formatted}</div>
