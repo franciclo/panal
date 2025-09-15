@@ -7,6 +7,10 @@ export const STANDARD_PAYMENT = BUDGET / TOTAL_APORTES;
 export const MIN_PAYMENT = 100000;
 export const MAX_PAYMENT = 1000000;
 
+// Balance scenario control
+// Positive values = surplus, negative values = deficit, 0 = balanced
+export const BALANCE_SCENARIO = -5000000; // Change this to test different scenarios
+
 
 // Color constants - Honeycomb theme (updated with new palette)
 export const COLORS = {

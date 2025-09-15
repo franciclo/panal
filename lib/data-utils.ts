@@ -1,4 +1,4 @@
-import { NUMBER_OF_FAMILIES, TOTAL_APORTES, MORA_COUNT, STANDARD_PAYMENT, MIN_PAYMENT, MAX_PAYMENT } from './constants';
+import { NUMBER_OF_FAMILIES, TOTAL_APORTES, MORA_COUNT, STANDARD_PAYMENT, MIN_PAYMENT, MAX_PAYMENT, BALANCE_SCENARIO } from './constants';
 import { formatAbbreviated } from './format-utils';
 import type { PaymentStats, Aporte } from './types';
 
@@ -10,6 +10,16 @@ const createAporte = (familiaIndex: number, aporteIndex: number): Aporte => {
   } else {
     value = Math.floor(Math.random() * MAX_PAYMENT) + MIN_PAYMENT;
   }
+  
+  // Apply balance scenario adjustment
+  // BALANCE_SCENARIO is the target balance difference from expected total
+  // We distribute this adjustment across all aportes
+  const adjustmentPerAporte = BALANCE_SCENARIO / TOTAL_APORTES;
+  value = Math.floor(value + adjustmentPerAporte);
+  
+  // Ensure value stays within reasonable bounds
+  value = Math.max(MIN_PAYMENT, Math.min(MAX_PAYMENT, value));
+  
   return {
     id: `familia-${familiaIndex}-aporte-${aporteIndex}`,
     value,
