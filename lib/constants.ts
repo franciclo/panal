@@ -1,7 +1,7 @@
 // Application constants
 export const NUMBER_OF_FAMILIES = 300; // The number of families contributing
 export const TOTAL_APORTES = 400;      // The total number of aportes (kids) to visualize
-export const MORA_COUNT = 40;
+export const MORA_COUNT = 60;
 export const BUDGET = 200000000;
 export const STANDARD_PAYMENT = BUDGET / TOTAL_APORTES;
 export const MIN_PAYMENT = 100000;
@@ -9,7 +9,7 @@ export const MAX_PAYMENT = 1000000;
 
 // Balance scenario control
 // Positive values = surplus, negative values = deficit, 0 = balanced
-export const BALANCE_SCENARIO = -5000000; // Change this to test different scenarios
+export const BALANCE_SCENARIO = -10000000; // Change this to test different scenarios
 
 
 // Color constants - Honeycomb theme (updated with new palette)
