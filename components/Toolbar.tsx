@@ -1,7 +1,6 @@
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Slider } from "@/components/ui/slider";
 import { formatAbbreviated } from '@/lib/format-utils';
-import { BUDGET } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
 
 // Mock data for previous months
@@ -54,18 +53,31 @@ interface ToolbarProps {
   designatedFamiliaIndex: number;
   onAporteChange: (percentageChange: number) => void;
   getFamiliaAportesSum: (familiaIndex: number) => number;
-  getInitialFamiliaAportesSum: (familiaIndex: number) => number;
+  controlledBudget: number;
+  setControlledBudget: (budget: number) => void;
+  getDynamicStandardPayment: () => number;
+  getFamiliaStandardBaseline: (familiaIndex: number) => number;
+  getFamiliaPercentageFromStandard: (familiaIndex: number) => number;
 }
 
-export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onAporteChange, getFamiliaAportesSum, getInitialFamiliaAportesSum }: ToolbarProps) {
+export function Toolbar({ 
+  presupuestoTotal, 
+  aportes, 
+  designatedFamiliaIndex, 
+  onAporteChange, 
+  getFamiliaAportesSum, 
+  controlledBudget,
+  setControlledBudget,
+  getDynamicStandardPayment,
+  getFamiliaStandardBaseline,
+  getFamiliaPercentageFromStandard
+}: ToolbarProps) {
   const currentSum = getFamiliaAportesSum(designatedFamiliaIndex);
-  const initialSum = getInitialFamiliaAportesSum(designatedFamiliaIndex);
-
-  // This calculates the percentage *change* (e.g., -50, 0, +50) for the slider value
-  const percentageChange = initialSum > 0 ? ((currentSum / initialSum) - 1) * 100 : 0;
+  const standardBaseline = getFamiliaStandardBaseline(designatedFamiliaIndex);
+  const percentageFromStandard = getFamiliaPercentageFromStandard(designatedFamiliaIndex);
   
-  // Calculate balance: presupuestoTotal - BUDGET
-  const balance = presupuestoTotal - BUDGET;
+  // Calculate balance: presupuestoTotal - controlledBudget
+  const balance = presupuestoTotal - controlledBudget;
   
   return (
     <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10" style={{bottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
@@ -183,7 +195,7 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
                   <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
                     {formatAbbreviated(presupuestoTotal)}
                   </div>
-                  <div className={`w-2 h-2 rounded-full ml-2 ${presupuestoTotal >= BUDGET ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ml-2 ${presupuestoTotal >= controlledBudget ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 </div>
               </button>
             </DrawerTrigger>
@@ -204,13 +216,33 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
                     <div className={`text-lg font-semibold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {balance >= 0 ? '+' : ''}${balance.toLocaleString()}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      Presupuesto: ${BUDGET.toLocaleString()}
-                    </div>
+                  <div className="text-xs text-gray-500">
+                    Presupuesto Objetivo: ${controlledBudget.toLocaleString()}
+                  </div>
                   </div>
                   
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500 mb-4">
                     Basado en {aportes.length} familias ({aportes.flat().length} aportes)
+                  </div>
+                  
+                  {/* Budget Control */}
+                  <div className="mb-4">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Ajustar Presupuesto Objetivo</div>
+                    <Slider
+                      min={100000000}
+                      max={500000000}
+                      step={10000000}
+                      value={[controlledBudget]}
+                      onValueChange={(value) => setControlledBudget(value[0])}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>$100M</span>
+                      <span>$500M</span>
+                    </div>
+                    <div className="text-xs text-gray-600 text-center mt-2">
+                      Aporte Promedio: ${getDynamicStandardPayment().toLocaleString()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -257,20 +289,17 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
 
                   {/* Percentage change */}
                   {(() => {
-                    const currentSum = getFamiliaAportesSum(designatedFamiliaIndex);
-                    const initialSum = getInitialFamiliaAportesSum(designatedFamiliaIndex);
-                    const percentageChange = initialSum > 0 ? ((currentSum - initialSum) / initialSum) * 100 : 0;
-                    const isIncrease = percentageChange > 0;
-                    const isDecrease = percentageChange < 0;
+                    const isIncrease = percentageFromStandard > 0;
+                    const isDecrease = percentageFromStandard < 0;
                     
                     return (
                       <div className="mb-4">
-                        <div className="text-sm font-medium text-gray-700 mb-1">Cambio desde el valor inicial:</div>
+                        <div className="text-sm font-medium text-gray-700 mb-1">Cambio desde el aporte promedio:</div>
                         <div className={`text-lg font-semibold ${isIncrease ? 'text-green-600' : isDecrease ? 'text-red-600' : 'text-gray-600'}`}>
-                          {isIncrease ? '+' : ''}{percentageChange.toFixed(1)}%
+                          {isIncrease ? '+' : ''}{percentageFromStandard.toFixed(1)}%
                         </div>
                         <div className="text-xs text-gray-500">
-                          Inicial: ${initialSum.toLocaleString()} → Actual: ${currentSum.toLocaleString()}
+                          Promedio: ${standardBaseline.toLocaleString()} → Actual: ${currentSum.toLocaleString()}
                         </div>
                       </div>
                     );
@@ -281,7 +310,7 @@ export function Toolbar({ presupuestoTotal, aportes, designatedFamiliaIndex, onA
                     min={-100}
                     max={100}
                     step={1}
-                    value={[percentageChange]}
+                    value={[percentageFromStandard]}
                     onValueChange={(value) => onAporteChange(value[0])}
                     className="w-full"
                   />

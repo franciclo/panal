@@ -9,7 +9,18 @@ import { Toolbar } from '@/components/Toolbar';
 import { HexagonCanvas } from '@/components/HexagonCanvas';
 
 export default function Home() {
-  const { aportes, moraIndices, designatedFamiliaIndex, handleAporteChange, getFamiliaAportesSum, getInitialFamiliaAportesSum } = useFamiliaData();
+  const { 
+    aportes, 
+    moraIndices, 
+    designatedFamiliaIndex, 
+    handleAporteChange, 
+    getFamiliaAportesSum, 
+    controlledBudget,
+    setControlledBudget,
+    getDynamicStandardPayment,
+    getFamiliaStandardBaseline,
+    getFamiliaPercentageFromStandard
+  } = useFamiliaData();
   const dimensions = useDimensions();
 
   const presupuestoTotal = aportes.flat().reduce((sum, aporte) => sum + aporte.value, 0);
@@ -37,7 +48,11 @@ export default function Home() {
         designatedFamiliaIndex={designatedFamiliaIndex}
         onAporteChange={handleAporteChange}
         getFamiliaAportesSum={getFamiliaAportesSum}
-        getInitialFamiliaAportesSum={getInitialFamiliaAportesSum}
+        controlledBudget={controlledBudget}
+        setControlledBudget={setControlledBudget}
+        getDynamicStandardPayment={getDynamicStandardPayment}
+        getFamiliaStandardBaseline={getFamiliaStandardBaseline}
+        getFamiliaPercentageFromStandard={getFamiliaPercentageFromStandard}
       />
     </div>
   );
