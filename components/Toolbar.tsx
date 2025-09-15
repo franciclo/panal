@@ -1,9 +1,12 @@
+"use client";
+
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Slider } from "@/components/ui/slider";
 import { formatAbbreviated } from '@/lib/format-utils';
 import { STANDARD_PAYMENT } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
 import { AlertTriangle } from "lucide-react";
+import { useMemo, useState } from "react";
 
 // Mock data for previous months
 const MONTHS_DATA = [
@@ -82,6 +85,25 @@ export function Toolbar({
   const isDeficit = balance < 0;
   const shouldApplyFixedDisplay = isDeficit && currentSum < familiaBaseline;
   const displayFamiliaTotal = shouldApplyFixedDisplay ? familiaBaseline : currentSum;
+
+  // Mock controls for budget distribution (visual only)
+  const BASE_MOCK = {
+    salarios: 120_000_000,
+    becas: 35_000_000,
+    reservas: 25_000_000,
+    mantenimiento: 18_000_000,
+  };
+
+  const [salariosPct, setSalariosPct] = useState(60);
+  const [becasPct, setBecasPct] = useState(40);
+  const [reservasPct, setReservasPct] = useState(20);
+  const [mantenimientoPct, setMantenimientoPct] = useState(25);
+
+  // Base + percentage increment behavior: 0% => base amount; 100% => double the base
+  const salariosAmount = useMemo(() => Math.round(BASE_MOCK.salarios * (1 + salariosPct / 100)), [salariosPct]);
+  const becasAmount = useMemo(() => Math.round(BASE_MOCK.becas * (1 + becasPct / 100)), [becasPct]);
+  const reservasAmount = useMemo(() => Math.round(BASE_MOCK.reservas * (1 + reservasPct / 100)), [reservasPct]);
+  const mantenimientoAmount = useMemo(() => Math.round(BASE_MOCK.mantenimiento * (1 + mantenimientoPct / 100)), [mantenimientoPct]);
   
   return (
     <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10" style={{bottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
@@ -229,6 +251,84 @@ export function Toolbar({
                     Basado en {aportes.length} familias ({aportes.flat().length} aportes)
                   </div>
                   
+                </div>
+                {/* Budget controls (mock) */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">Aumentos</div>
+                    <div className="text-xs text-gray-500">
+                      Sujetos a votación
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Salarios */}
+                    <div className="rounded-lg border border-gray-200 p-3">
+                      <div className="flex items-baseline justify-between mb-1">
+                        <div className="text-sm text-gray-600">Salarios</div>
+                        <div className="text-sm font-semibold text-gray-900">{formatAbbreviated(salariosAmount)}</div>
+                      </div>
+                      <div className="text-[11px] text-gray-400 mb-2">Base: {formatAbbreviated(BASE_MOCK.salarios)} • {salariosPct}%</div>
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[salariosPct]}
+                        onValueChange={(v) => setSalariosPct(v[0])}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Becas */}
+                    <div className="rounded-lg border border-gray-200 p-3">
+                      <div className="flex items-baseline justify-between mb-1">
+                        <div className="text-sm text-gray-600">Becas</div>
+                        <div className="text-sm font-semibold text-gray-900">{formatAbbreviated(becasAmount)}</div>
+                      </div>
+                      <div className="text-[11px] text-gray-400 mb-2">Base: {formatAbbreviated(BASE_MOCK.becas)} • {becasPct}%</div>
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[becasPct]}
+                        onValueChange={(v) => setBecasPct(v[0])}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Reservas */}
+                    <div className="rounded-lg border border-gray-200 p-3">
+                      <div className="flex items-baseline justify-between mb-1">
+                        <div className="text-sm text-gray-600">Reservas</div>
+                        <div className="text-sm font-semibold text-gray-900">{formatAbbreviated(reservasAmount)}</div>
+                      </div>
+                      <div className="text-[11px] text-gray-400 mb-2">Base: {formatAbbreviated(BASE_MOCK.reservas)} • {reservasPct}%</div>
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[reservasPct]}
+                        onValueChange={(v) => setReservasPct(v[0])}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Mantenimiento */}
+                    <div className="rounded-lg border border-gray-200 p-3">
+                      <div className="flex items-baseline justify-between mb-1">
+                        <div className="text-sm text-gray-600">Mantenimiento</div>
+                        <div className="text-sm font-semibold text-gray-900">{formatAbbreviated(mantenimientoAmount)}</div>
+                      </div>
+                      <div className="text-[11px] text-gray-400 mb-2">Base: {formatAbbreviated(BASE_MOCK.mantenimiento)} • {mantenimientoPct}%</div>
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[mantenimientoPct]}
+                        onValueChange={(v) => setMantenimientoPct(v[0])}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </DrawerContent>
