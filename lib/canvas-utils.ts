@@ -53,8 +53,8 @@ function drawStraightHexagon(
 
   ctx.closePath();
 
-  // Fill outer hexagon with background color
-  ctx.fillStyle = COLORS.background;
+  // Fill outer hexagon with lighter border color for colored aportes, background for empty ones
+  ctx.fillStyle = hasData ? COLORS.border : COLORS.background;
   ctx.fill();
 
   // No stroke - outer hexagon has no border
