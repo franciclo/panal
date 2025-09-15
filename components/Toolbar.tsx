@@ -3,6 +3,7 @@ import { Slider } from "@/components/ui/slider";
 import { formatAbbreviated } from '@/lib/format-utils';
 import { STANDARD_PAYMENT } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
+import { AlertTriangle } from "lucide-react";
 
 // Mock data for previous months
 const MONTHS_DATA = [
@@ -74,6 +75,13 @@ export function Toolbar({
   // Calculate balance: presupuestoTotal - expected total (STANDARD_PAYMENT * totalAportes)
   const expectedTotal = STANDARD_PAYMENT * aportes.flat().length;
   const balance = presupuestoTotal - expectedTotal;
+  
+  // Fixed aporte display logic (visual only)
+  const familiaAportesCount = aportes[designatedFamiliaIndex]?.length || 0;
+  const familiaBaseline = STANDARD_PAYMENT * familiaAportesCount;
+  const isDeficit = balance < 0;
+  const shouldApplyFixedDisplay = isDeficit && currentSum < familiaBaseline;
+  const displayFamiliaTotal = shouldApplyFixedDisplay ? familiaBaseline : currentSum;
   
   return (
     <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10" style={{bottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
@@ -235,7 +243,7 @@ export function Toolbar({
               <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Aporte</div>
                 <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
-                  {formatAbbreviated(getFamiliaAportesSum(designatedFamiliaIndex))}
+                  {formatAbbreviated(displayFamiliaTotal)}
                 </div>
               </button>
             </DrawerTrigger>
@@ -246,9 +254,17 @@ export function Toolbar({
               <div className="p-4">
                 <div className="text-center mb-4">
                   <div className="text-4xl font-bold mb-2 text-gray-900">
-                    ${getFamiliaAportesSum(designatedFamiliaIndex).toLocaleString()}
+                    ${displayFamiliaTotal.toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-600 mb-2">Total de Aportes</div>
+                  {shouldApplyFixedDisplay && (
+                    <div className="mb-4">
+                      <div className="inline-flex items-start space-x-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <div className="text-xs text-amber-700/90">
+                            Debido al balance negativo no se permiten aportes por debajo del promedio.
+                          </div>
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Individual aportes - only show if more than one */}
                   {aportes[designatedFamiliaIndex] && aportes[designatedFamiliaIndex].length > 1 && (
@@ -271,18 +287,18 @@ export function Toolbar({
                     
                     return (
                       <div className="mb-4">
-                        <div className="text-sm font-medium text-gray-700 mb-1">Cambio desde el aporte estándar:</div>
+                        <div className="text-sm font-medium text-gray-700 mb-1">Cambio desde el aporte promedio:</div>
                         <div className={`text-lg font-semibold ${isIncrease ? 'text-green-600' : isDecrease ? 'text-red-600' : 'text-gray-600'}`}>
                           {isIncrease ? '+' : ''}{percentageFromStandard.toFixed(1)}%
                         </div>
                          <div className="text-xs text-gray-500">
-                           Estándar: ${standardBaseline.toLocaleString()} → Actual: ${currentSum.toLocaleString()}
+                           Promedio: ${standardBaseline.toLocaleString()} → Actual: ${currentSum.toLocaleString()}
                          </div>
                       </div>
                     );
                   })()}
 
-                  <div className="text-sm text-gray-600 mb-4">Ajustar Aportes (%)</div>
+                  <div className="text-sm text-gray-600 mb-4">Ajusta el aporte (%)</div>
                   <Slider
                     min={-100}
                     max={100}
