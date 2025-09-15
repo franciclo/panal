@@ -9,18 +9,63 @@ export function drawHexagon(
   color: string, 
   hasData: boolean
 ) {
-  // Calculate radii for outer and inner hexagons
-  const outerRadius = size;
-  const innerRadius = size * 0.9; // 90% of outer size for slimmer borders
-  const cornerRadius = Math.max(3, size * 0.2); // 20% of size, minimum 3px
+  // Draw outer hexagon (straight edges)
+  const outerVertices = getHexagonVertices(x, y, size);
+  ctx.beginPath();
+  ctx.moveTo(outerVertices[0][0], outerVertices[0][1]);
+  for (let i = 1; i < outerVertices.length; i++) {
+    ctx.lineTo(outerVertices[i][0], outerVertices[i][1]);
+  }
+  ctx.closePath();
+  
+  // Fill outer hexagon with border color for data hexagons, background for empty ones
+  ctx.fillStyle = hasData ? COLORS.border : COLORS.background;
+  ctx.fill();
 
-  // Draw outer hexagon with straight borders
-  drawStraightHexagon(ctx, x, y, outerRadius, hasData, color);
+  // Draw inner hexagon (rounded corners)
+  const innerSize = size * 0.9; // 90% of outer size
+  const innerVertices = getHexagonVertices(x, y, innerSize);
+  
+  ctx.beginPath();
+  for (let i = 0; i < innerVertices.length; i++) {
+    const current = innerVertices[i];
+    const next = innerVertices[(i + 1) % innerVertices.length];
+    const prev = innerVertices[(i - 1 + innerVertices.length) % innerVertices.length];
 
-  // Draw inner hexagon with rounded corners
-  // Use grey color for background hexagons, original color for data hexagons
-  const innerColor = hasData ? color : COLORS.backgroundBorder;
-  drawRoundedHexagon(ctx, x, y, innerRadius, cornerRadius, innerColor);
+    // Calculate corner radius
+    const cornerRadius = Math.max(2, size * 0.15);
+    
+    // Calculate vectors for rounded corners
+    const toPrev = [prev[0] - current[0], prev[1] - current[1]];
+    const toNext = [next[0] - current[0], next[1] - current[1]];
+    
+    // Normalize vectors
+    const toPrevLength = Math.sqrt(toPrev[0] ** 2 + toPrev[1] ** 2);
+    const toNextLength = Math.sqrt(toNext[0] ** 2 + toNext[1] ** 2);
+    
+    toPrev[0] /= toPrevLength;
+    toPrev[1] /= toPrevLength;
+    toNext[0] /= toNextLength;
+    toNext[1] /= toNextLength;
+    
+    // Calculate rounded corner points
+    const cornerStart = [current[0] + toPrev[0] * cornerRadius, current[1] + toPrev[1] * cornerRadius];
+    const cornerEnd = [current[0] + toNext[0] * cornerRadius, current[1] + toNext[1] * cornerRadius];
+    
+    if (i === 0) {
+      ctx.moveTo(cornerStart[0], cornerStart[1]);
+    } else {
+      ctx.lineTo(cornerStart[0], cornerStart[1]);
+    }
+    
+    // Draw rounded corner
+    ctx.quadraticCurveTo(current[0], current[1], cornerEnd[0], cornerEnd[1]);
+  }
+  ctx.closePath();
+  
+  // Fill inner hexagon with the data color or background border
+  ctx.fillStyle = hasData ? color : COLORS.backgroundBorder;
+  ctx.fill();
 }
 
 function getHexagonVertices(centerX: number, centerY: number, radius: number): [number, number][] {
@@ -34,105 +79,37 @@ function getHexagonVertices(centerX: number, centerY: number, radius: number): [
   return vertices;
 }
 
-function drawStraightHexagon(
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  radius: number,
-  hasData: boolean,
-  color: string
-) {
-  const vertices = getHexagonVertices(centerX, centerY, radius);
-
-  ctx.beginPath();
-  ctx.moveTo(vertices[0][0], vertices[0][1]);
-
-  for (let i = 1; i < vertices.length; i++) {
-    ctx.lineTo(vertices[i][0], vertices[i][1]);
-  }
-
-  ctx.closePath();
-
-  // Fill outer hexagon with lighter border color for colored aportes, background for empty ones
-  ctx.fillStyle = hasData ? COLORS.border : COLORS.background;
-  ctx.fill();
-
-  // No stroke - outer hexagon has no border
-}
-
-function drawRoundedHexagon(
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  radius: number,
-  cornerRadius: number,
-  color: string
-) {
-  const vertices = getHexagonVertices(centerX, centerY, radius);
-
-  ctx.beginPath();
-
-  for (let i = 0; i < vertices.length; i++) {
-    const current = vertices[i];
-    const next = vertices[(i + 1) % vertices.length];
-    const prev = vertices[(i - 1 + vertices.length) % vertices.length];
-
-    // Calculate vectors from current vertex to adjacent vertices
-    const toPrev = [prev[0] - current[0], prev[1] - current[1]];
-    const toNext = [next[0] - current[0], next[1] - current[1]];
-
-    // Normalize vectors
-    const toPrevLength = Math.sqrt(toPrev[0] ** 2 + toPrev[1] ** 2);
-    const toNextLength = Math.sqrt(toNext[0] ** 2 + toNext[1] ** 2);
-
-    toPrev[0] /= toPrevLength;
-    toPrev[1] /= toPrevLength;
-    toNext[0] /= toNextLength;
-    toNext[1] /= toNextLength;
-
-    // Calculate points for rounded corner
-    const cornerStart = [current[0] + toPrev[0] * cornerRadius, current[1] + toPrev[1] * cornerRadius];
-    const cornerEnd = [current[0] + toNext[0] * cornerRadius, current[1] + toNext[1] * cornerRadius];
-
-    if (i === 0) {
-      ctx.moveTo(cornerStart[0], cornerStart[1]);
-    } else {
-      ctx.lineTo(cornerStart[0], cornerStart[1]);
-    }
-
-    // Draw rounded corner using quadratic curve
-    ctx.quadraticCurveTo(current[0], current[1], cornerEnd[0], cornerEnd[1]);
-  }
-
-  ctx.closePath();
-
-  // Fill inner hexagon with the specified color
-  ctx.fillStyle = color;
-  ctx.fill();
-}
 
 export function calculateHexagonGrid(dimensions: any, hexSize: number) {
   const centerX = dimensions.width / 2;
-  const statsHeight = dimensions.width < 640 ? 50 : 60;
-  const toolbarHeight = dimensions.width < 640 ? 60 : 80;
-  const topPadding = dimensions.width < 640 ? 20 : 40;
-  const verticalPadding = dimensions.height * 0.08;
-  const availableHeight = dimensions.height - statsHeight - toolbarHeight - topPadding - (verticalPadding * 2);
   
-  // Center the circular shape in the available vertical space
-  const centerY = statsHeight + topPadding + verticalPadding + availableHeight / 2;
-
+  // Calculate vertical padding based on responsive breakpoints
+  const isMobile = dimensions.width < 640;
+  const isTablet = dimensions.width < 768;
+  
+  // Stats bar: top-2 sm:top-4 + content height
+  const statsTopPadding = isMobile ? 8 : 16; // top-2 = 8px, sm:top-4 = 16px
+  const statsContentHeight = isMobile ? 40 : 50; // Approximate content height
+  
+  // Toolbar: bottom-4 sm:bottom-6 md:bottom-8 + content height  
+  const toolbarBottomPadding = isMobile ? 16 : isTablet ? 24 : 32; // bottom-4/6/8
+  const toolbarContentHeight = isMobile ? 60 : 80; // Approximate content height
+  
+  // Calculate available vertical space
+  const topPadding = statsTopPadding + statsContentHeight + 60; // Extra margin
+  const bottomPadding = toolbarBottomPadding + toolbarContentHeight + 20; // Extra margin
+  const availableHeight = dimensions.height - topPadding - bottomPadding;
+  
+  // Center the honeycomb in the available vertical space
+  const centerY = topPadding + availableHeight / 2;
+  
   const HEX_WIDTH = hexSize * Math.sqrt(3);
   const HEX_HEIGHT = hexSize * 1.5;
   
-  // Calculate maximum radius that fits within available space
-  const sidePadding = dimensions.width < 640 ? 15 : 25;
-  const availableWidth = dimensions.width - (sidePadding * 2);
-  const minDimension = Math.min(availableHeight, availableWidth);
-  
   // Calculate viewport radius based on available space
-  const maxRadiusBySpace = Math.floor(minDimension / (hexSize * 2));
-  const viewportRadius = Math.max(maxRadiusBySpace, Math.ceil(Math.max(dimensions.width / HEX_WIDTH, dimensions.height / HEX_HEIGHT)) + 2);
+  const availableWidth = dimensions.width - 40; // Side padding
+  const minDimension = Math.min(availableHeight, availableWidth);
+  const viewportRadius = Math.ceil(minDimension / (hexSize * 2)) + 2;
 
   return {
     centerX,
@@ -142,5 +119,3 @@ export function calculateHexagonGrid(dimensions: any, hexSize: number) {
     viewportRadius
   };
 }
-
-// Note: generateCircularPositions removed - using direct distance-based sorting

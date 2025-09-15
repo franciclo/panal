@@ -1,12 +1,11 @@
 import { MIN_PAYMENT, MAX_PAYMENT } from './constants';
-import type { ColorStop } from './types';
 
 // Color interpolation for payment values
 export function getPaymentColor(value: number): string {
   const normalized = (value - MIN_PAYMENT) / (MAX_PAYMENT - MIN_PAYMENT);
   const clamped = Math.max(0, Math.min(1, normalized));
   
-  const colorStops: ColorStop[] = [
+  const colorStops = [
     { h: 40, s: 85, l: 84 },     // Peach - very light honey (#F9E2B3)
     { h: 40, s: 90, l: 80 },     // Light peach-gold transition
     { h: 43, s: 99, l: 68 },     // Sunglow - bright golden yellow (#FED15F)

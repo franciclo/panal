@@ -1,16 +1,9 @@
-import { type } from "os";
-
 // Core data types
 export interface Aporte {
   id: string;
   value: number;
 }
 
-export interface FamiliaData {
-  aportes: Aporte[]; // Array of aportes for this family
-  isEnMora: boolean;
-  index: number;
-}
 
 export interface HexagonData {
   x: number;
@@ -44,8 +37,3 @@ export interface PaymentStats {
   };
 }
 
-export interface ColorStop {
-  h: number;
-  s: number;
-  l: number;
-}

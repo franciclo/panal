@@ -35,21 +35,23 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       canvas.style.height = `${dimensions.height}px`;
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-      // Calculate layout for circular shape
-      const statsHeight = dimensions.width < 640 ? 50 : 60;
-      const toolbarHeight = dimensions.width < 640 ? 60 : 80;
-      const sidePadding = dimensions.width < 640 ? 15 : 25;
-      const verticalPadding = dimensions.height * 0.08;
+      // Calculate hex size based on available space (considering toolbar and stats)
+      const isMobile = dimensions.width < 640;
+      const isTablet = dimensions.width < 768;
       
-      const availableHeight = dimensions.height - statsHeight - toolbarHeight - (verticalPadding * 2);
-      const availableWidth = dimensions.width - (sidePadding * 2);
+      // Calculate available space (same logic as calculateHexagonGrid)
+      const statsTopPadding = isMobile ? 10 : 16;
+      const statsContentHeight = isMobile ? 40 : 50;
+      const toolbarBottomPadding = isMobile ? 16 : isTablet ? 24 : 32;
+      const toolbarContentHeight = isMobile ? 60 : 80;
       
-      // For circular shape: use the smaller dimension to ensure it fits
+      const topPadding = statsTopPadding + statsContentHeight + 20;
+      const bottomPadding = toolbarBottomPadding + toolbarContentHeight + 20;
+      const availableHeight = dimensions.height - topPadding - bottomPadding;
+      const availableWidth = dimensions.width - 40;
+      
       const minDimension = Math.min(availableHeight, availableWidth);
       const blobRadius = Math.sqrt(TOTAL_APORTES / Math.PI);
-      
-      // Calculate hex size to fit circular shape within available space
-      // Use 2.5 multiplier to ensure the circular shape fits comfortably
       const maxHexSize = minDimension / (blobRadius * 3.4);
       const hexSize = Math.max(6, Math.min(35, maxHexSize));
       
@@ -58,7 +60,29 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       ctx.clearRect(0, 0, dimensions.width, dimensions.height);
       const newHexGridData: HexagonData[] = [];
 
-      // Collect and sort hexagons by distance from center
+      // First, render the full background grid covering entire canvas
+      const backgroundRadius = Math.max(
+        Math.ceil(dimensions.width / HEX_WIDTH),
+        Math.ceil(dimensions.height / HEX_HEIGHT)
+      ) + 2;
+
+      for (let q = -backgroundRadius; q <= backgroundRadius; q++) {
+        const r1 = Math.max(-backgroundRadius, -q - backgroundRadius);
+        const r2 = Math.min(backgroundRadius, -q + backgroundRadius);
+
+        for (let r = r1; r <= r2; r++) {
+          const x = centerX + HEX_WIDTH * (q + r / 2);
+          const y = centerY + HEX_HEIGHT * r;
+
+          // Only render if hexagon is visible on screen
+          if (x + hexSize >= 0 && x - hexSize <= dimensions.width && 
+              y + hexSize >= 0 && y - hexSize <= dimensions.height) {
+            drawHexagon(ctx, x, y, hexSize, COLORS.background, false);
+          }
+        }
+      }
+
+      // Collect and sort hexagons by distance from center for data overlay
       const hexagonPositions: Array<{x: number, y: number, q: number, r: number, distance: number}> = [];
       
       for (let q = -viewportRadius; q <= viewportRadius; q++) {
@@ -82,7 +106,7 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       hexagonPositions.sort((a, b) => a.distance - b.distance);
       const assignedHexagons = new Set(hexagonPositions.slice(0, TOTAL_APORTES).map(h => `${h.q},${h.r}`));
 
-      // Render grid
+      // Render data hexagons on top of background
       let aporteIndex = 0;
       
       for (let q = -viewportRadius; q <= viewportRadius; q++) {
@@ -117,7 +141,11 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
           }
 
           newHexGridData.push({ x, y, size: hexSize, familiaIndex, aporteId, hasData });
-          drawHexagon(ctx, x, y, hexSize, color, hasData);
+          
+          // Only draw data hexagons (background already drawn)
+          if (hasData) {
+            drawHexagon(ctx, x, y, hexSize, color, hasData);
+          }
         }
       }
       
