@@ -15,9 +15,6 @@ export default function Home() {
     designatedFamiliaIndex, 
     handleAporteChange, 
     getFamiliaAportesSum, 
-    controlledBudget,
-    setControlledBudget,
-    getDynamicStandardPayment,
     getFamiliaStandardBaseline,
     getFamiliaPercentageFromStandard
   } = useFamiliaData();
@@ -48,9 +45,6 @@ export default function Home() {
         designatedFamiliaIndex={designatedFamiliaIndex}
         onAporteChange={handleAporteChange}
         getFamiliaAportesSum={getFamiliaAportesSum}
-        controlledBudget={controlledBudget}
-        setControlledBudget={setControlledBudget}
-        getDynamicStandardPayment={getDynamicStandardPayment}
         getFamiliaStandardBaseline={getFamiliaStandardBaseline}
         getFamiliaPercentageFromStandard={getFamiliaPercentageFromStandard}
       />

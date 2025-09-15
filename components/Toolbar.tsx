@@ -1,6 +1,7 @@
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Slider } from "@/components/ui/slider";
 import { formatAbbreviated } from '@/lib/format-utils';
+import { STANDARD_PAYMENT } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
 
 // Mock data for previous months
@@ -53,9 +54,6 @@ interface ToolbarProps {
   designatedFamiliaIndex: number;
   onAporteChange: (percentageChange: number) => void;
   getFamiliaAportesSum: (familiaIndex: number) => number;
-  controlledBudget: number;
-  setControlledBudget: (budget: number) => void;
-  getDynamicStandardPayment: () => number;
   getFamiliaStandardBaseline: (familiaIndex: number) => number;
   getFamiliaPercentageFromStandard: (familiaIndex: number) => number;
 }
@@ -65,10 +63,7 @@ export function Toolbar({
   aportes, 
   designatedFamiliaIndex, 
   onAporteChange, 
-  getFamiliaAportesSum, 
-  controlledBudget,
-  setControlledBudget,
-  getDynamicStandardPayment,
+  getFamiliaAportesSum,
   getFamiliaStandardBaseline,
   getFamiliaPercentageFromStandard
 }: ToolbarProps) {
@@ -76,8 +71,9 @@ export function Toolbar({
   const standardBaseline = getFamiliaStandardBaseline(designatedFamiliaIndex);
   const percentageFromStandard = getFamiliaPercentageFromStandard(designatedFamiliaIndex);
   
-  // Calculate balance: presupuestoTotal - controlledBudget
-  const balance = presupuestoTotal - controlledBudget;
+  // Calculate balance: presupuestoTotal - expected total (STANDARD_PAYMENT * totalAportes)
+  const expectedTotal = STANDARD_PAYMENT * aportes.flat().length;
+  const balance = presupuestoTotal - expectedTotal;
   
   return (
     <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10" style={{bottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
@@ -195,7 +191,7 @@ export function Toolbar({
                   <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
                     {formatAbbreviated(presupuestoTotal)}
                   </div>
-                  <div className={`w-2 h-2 rounded-full ml-2 ${presupuestoTotal >= controlledBudget ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ml-2 ${balance >= 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 </div>
               </button>
             </DrawerTrigger>
@@ -217,7 +213,7 @@ export function Toolbar({
                       {balance >= 0 ? '+' : ''}${balance.toLocaleString()}
                     </div>
                   <div className="text-xs text-gray-500">
-                    Presupuesto Objetivo: ${controlledBudget.toLocaleString()}
+                    Presupuesto Esperado: ${expectedTotal.toLocaleString()}
                   </div>
                   </div>
                   
@@ -225,25 +221,6 @@ export function Toolbar({
                     Basado en {aportes.length} familias ({aportes.flat().length} aportes)
                   </div>
                   
-                  {/* Budget Control */}
-                  <div className="mb-4">
-                    <div className="text-sm font-medium text-gray-700 mb-2">Ajustar Presupuesto Objetivo</div>
-                    <Slider
-                      min={100000000}
-                      max={500000000}
-                      step={10000000}
-                      value={[controlledBudget]}
-                      onValueChange={(value) => setControlledBudget(value[0])}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>$100M</span>
-                      <span>$500M</span>
-                    </div>
-                    <div className="text-xs text-gray-600 text-center mt-2">
-                      Aporte Promedio: ${getDynamicStandardPayment().toLocaleString()}
-                    </div>
-                  </div>
                 </div>
               </div>
             </DrawerContent>
@@ -294,13 +271,13 @@ export function Toolbar({
                     
                     return (
                       <div className="mb-4">
-                        <div className="text-sm font-medium text-gray-700 mb-1">Cambio desde el aporte promedio:</div>
+                        <div className="text-sm font-medium text-gray-700 mb-1">Cambio desde el aporte estándar:</div>
                         <div className={`text-lg font-semibold ${isIncrease ? 'text-green-600' : isDecrease ? 'text-red-600' : 'text-gray-600'}`}>
                           {isIncrease ? '+' : ''}{percentageFromStandard.toFixed(1)}%
                         </div>
-                        <div className="text-xs text-gray-500">
-                          Promedio: ${standardBaseline.toLocaleString()} → Actual: ${currentSum.toLocaleString()}
-                        </div>
+                         <div className="text-xs text-gray-500">
+                           Estándar: ${standardBaseline.toLocaleString()} → Actual: ${currentSum.toLocaleString()}
+                         </div>
                       </div>
                     );
                   })()}

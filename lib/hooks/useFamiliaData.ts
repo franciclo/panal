@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { generateAportes, generateMoraIndices } from '../data-utils';
-import { NUMBER_OF_FAMILIES, BUDGET } from '../constants';
+import { NUMBER_OF_FAMILIES, STANDARD_PAYMENT } from '../constants';
 import type { Aporte } from '../types';
 
 export function useFamiliaData() {
   const [aportes, setAportes] = useState<Aporte[][]>([]);
   const [moraIndices, setMoraIndices] = useState<number[]>([]);
   const [designatedFamiliaIndex, setDesignatedFamiliaIndex] = useState<number>(0);
-  const [controlledBudget, setControlledBudget] = useState<number>(BUDGET);
 
   useEffect(() => {
     const generatedAportes = generateAportes();
@@ -28,14 +27,13 @@ export function useFamiliaData() {
     setAportes(prev => {
       const updated = [...prev];
       const familiaAportes = prev[designatedFamiliaIndex];
-      const standardPayment = getDynamicStandardPayment();
 
       if (familiaAportes) {
         const multiplier = 1 + percentageChange / 100;
         
         const updatedFamiliaAportes = familiaAportes.map((aporte) => {
-          // Calculate new value based on average payment baseline
-          const newValue = standardPayment * multiplier;
+          // Calculate new value based on STANDARD_PAYMENT baseline (consistent with data generation)
+          const newValue = STANDARD_PAYMENT * multiplier;
           return {
             ...aporte, // Keep the same ID
             value: newValue,
@@ -53,25 +51,17 @@ export function useFamiliaData() {
     return aportes[familiaIndex]?.reduce((sum, aporte) => sum + aporte.value, 0) || 0;
   };
 
-
-  // Calculate dynamic average payment based on controlled budget
-  const getDynamicStandardPayment = () => {
-    const totalAportes = aportes.flat().length;
-    return totalAportes > 0 ? controlledBudget / totalAportes : 0;
-  };
-
-  // Calculate the average baseline for a family (average payment × number of aportes)
+  // Calculate the standard baseline for a family (STANDARD_PAYMENT × number of aportes)
   const getFamiliaStandardBaseline = (familiaIndex: number) => {
     const familiaAportes = aportes[familiaIndex];
-    const averagePayment = getDynamicStandardPayment();
-    return familiaAportes ? familiaAportes.length * averagePayment : 0;
+    return familiaAportes ? familiaAportes.length * STANDARD_PAYMENT : 0;
   };
 
-  // Calculate percentage change from average baseline
+  // Calculate percentage change from standard baseline
   const getFamiliaPercentageFromStandard = (familiaIndex: number) => {
     const currentSum = getFamiliaAportesSum(familiaIndex);
-    const averageBaseline = getFamiliaStandardBaseline(familiaIndex);
-    return averageBaseline > 0 ? ((currentSum / averageBaseline) - 1) * 100 : 0;
+    const standardBaseline = getFamiliaStandardBaseline(familiaIndex);
+    return standardBaseline > 0 ? ((currentSum / standardBaseline) - 1) * 100 : 0;
   };
 
   return {
@@ -80,9 +70,6 @@ export function useFamiliaData() {
     designatedFamiliaIndex,
     handleAporteChange,
     getFamiliaAportesSum,
-    controlledBudget,
-    setControlledBudget,
-    getDynamicStandardPayment,
     getFamiliaStandardBaseline,
     getFamiliaPercentageFromStandard
   };
