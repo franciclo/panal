@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Panal - Visualización de Economía Asociativa Escolar
 
-## Getting Started
+**Panal** es una aplicación web que visualiza la economía asociativa escolar usando un patrón hexagonal donde cada hexágono representa un aporte individual de las familias.
 
-First, run the development server:
+## ¿Qué Puedes Hacer con Panal?
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Visualizar Datos Financieros
+- **Ver el presupuesto total** de la escuela representado como un panal de hexágonos
+- **Identificar familias en mora** (hexágonos marrones)
+- **Distinguir tipos de aportes** por colores:
+  - Dorado claro: Becas (aportes reducidos)
+  - Dorado medio: Aportes estándar
+  - Dorado oscuro: Donaciones (aportes adicionales)
+  - Marrón oscuro: Familias en mora
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Consultar Estadísticas
+- **Total de mora**: Suma de aportes adeudados
+- **Donaciones**: Monto adicional recibido por encima del aporte estándar
+- **Becas**: Reducción total otorgada por debajo del aporte estándar
+- **Presupuesto total**: Suma de todos los aportes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Simular Cambios
+- **Seleccionar una familia** específica
+- **Ajustar el porcentaje** de sus aportes (+/- desde el valor inicial)
+- **Ver el impacto inmediato** en las estadísticas generales
+- **Observar cómo cambian** los totales de mora, donaciones y becas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Navegar la Interfaz
+- **Canvas hexagonal** que ocupa toda la pantalla
+- **Barra de estadísticas** en la parte superior
+- **Panel de control** en la parte inferior con:
+  - Selector de familia
+  - Deslizador para ajustar porcentajes
+  - Información de aportes actuales vs iniciales
 
-## Learn More
+## Datos de Ejemplo
 
-To learn more about Next.js, take a look at the following resources:
+La aplicación simula:
+- **300 familias** contribuyentes
+- **400 aportes** individuales distribuidos entre las familias
+- **40 familias** en mora (seleccionadas aleatoriamente)
+- **Presupuesto base** de $200,000,000
+- **Aportes estándar** de $500,000 por estudiante
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Panal: Visualización interactiva de economía asociativa escolar.*
