@@ -5,7 +5,6 @@ import { Slider } from "@/components/ui/slider";
 import { formatAbbreviated } from '@/lib/format-utils';
 import { STANDARD_PAYMENT } from '@/lib/constants';
 import { Aporte } from "@/lib/types";
-import { AlertTriangle } from "lucide-react";
 import { useMemo, useState } from "react";
 
 // Mock data for previous months
@@ -106,13 +105,14 @@ export function Toolbar({
   const mantenimientoAmount = useMemo(() => Math.round(BASE_MOCK.mantenimiento * (1 + mantenimientoPct / 100)), [mantenimientoPct]);
   
   return (
-    <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10" style={{bottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
-      <div className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg sm:rounded-xl md:rounded-2xl px-3 sm:px-4 py-2">
-        <div className="flex items-center space-x-2 sm:space-x-4">
+    <div className="fixed lg:absolute bottom-0 left-0 right-0 z-20 bg-gray-50 border-t border-gray-200" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
+      <div role="toolbar" aria-label="Barra de herramientas" className="mx-auto max-w-5xl px-3 sm:px-4">
+        <div className="h-14 sm:h-16 flex items-center justify-center gap-4 sm:gap-6 divide-x divide-gray-100">
+          <div className="px-2 sm:px-3">
           {/* Month Selector */}
           <Drawer>
             <DrawerTrigger asChild>
-              <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
+              <button aria-label="Abrir selector de mes" className="text-left hover:bg-gray-100/60 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500/40">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Mes</div>
                 <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
                   {getCurrentMonth()}
@@ -209,16 +209,15 @@ export function Toolbar({
             </DrawerContent>
           </Drawer>
 
-          {/* Separator */}
-          <div className="w-px h-8 bg-gradient-to-b from-gray-200 to-gray-300"></div>
-
+          </div>
+          <div className="px-2 sm:px-3">
           {/* Presupuesto */}
           <Drawer>
             <DrawerTrigger asChild>
-              <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
+              <button aria-label="Ver presupuesto" className="text-left hover:bg-gray-100/60 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500/40">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Presupuesto</div>
                 <div className="flex items-center">
-                  <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
+                  <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight tabular-nums">
                     {formatAbbreviated(presupuestoTotal)}
                   </div>
                   <div className={`w-2 h-2 rounded-full ml-2 ${balance >= 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -334,15 +333,14 @@ export function Toolbar({
             </DrawerContent>
           </Drawer>
 
-          {/* Separator */}
-          <div className="w-px h-8 bg-gradient-to-b from-gray-200 to-gray-300"></div>
-
+          </div>
+          <div className="px-2 sm:px-3">
           {/* Mi Aporte */}
           <Drawer>
             <DrawerTrigger asChild>
-              <button className="text-left hover:bg-gray-50/80 rounded-lg px-1 sm:px-2 py-1 sm:py-2 cursor-pointer">
+              <button aria-label="Ver mi aporte" className="text-left hover:bg-gray-100/60 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500/40">
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Aporte</div>
-                <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight">
+                <div className="text-sm sm:text-lg font-bold text-gray-900 leading-tight tabular-nums">
                   {formatAbbreviated(displayFamiliaTotal)}
                 </div>
               </button>
@@ -415,6 +413,7 @@ export function Toolbar({
               </div>
             </DrawerContent>
           </Drawer>
+          </div>
         </div>
       </div>
     </div>

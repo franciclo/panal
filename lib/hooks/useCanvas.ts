@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { drawHexagon, calculateHexagonGrid } from '../canvas-utils';
 import { getPaymentColor } from '../color-utils';
-import { COLORS, TOTAL_APORTES } from '../constants';
+import { COLORS, TOTAL_APORTES, MAX_HEX_SIZE, MIN_HEX_SIZE } from '../constants';
 import type { Dimensions, HexagonData, Aporte } from '../types';
 
 interface UseCanvasProps {
@@ -53,7 +53,7 @@ export function useCanvas({ aportes, moraIndices, dimensions }: UseCanvasProps) 
       const minDimension = Math.min(availableHeight, availableWidth);
       const blobRadius = Math.sqrt(TOTAL_APORTES / Math.PI);
       const maxHexSize = minDimension / (blobRadius * 3.4);
-      const hexSize = Math.max(6, Math.min(35, maxHexSize));
+      const hexSize = Math.max(MIN_HEX_SIZE, Math.min(MAX_HEX_SIZE, maxHexSize));
       
       const { centerX, centerY, HEX_WIDTH, HEX_HEIGHT, viewportRadius } = calculateHexagonGrid(dimensions, hexSize);
 

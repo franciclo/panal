@@ -7,6 +7,10 @@ export const STANDARD_PAYMENT = BUDGET / TOTAL_APORTES;
 export const MIN_PAYMENT = 100000;
 export const MAX_PAYMENT = 1000000;
 
+// Honeycomb sizing caps
+export const MIN_HEX_SIZE = 6;
+export const MAX_HEX_SIZE = 20; // further reduce to make the maximum honeycomb smaller
+
 // Balance scenario control
 // Positive values = surplus, negative values = deficit, 0 = balanced
 export const BALANCE_SCENARIO = -10000000; // Change this to test different scenarios
