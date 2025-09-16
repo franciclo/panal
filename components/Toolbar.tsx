@@ -350,7 +350,8 @@ export function Toolbar({
                 {/* Mi Aporte Mensual */}
               </DrawerTitle>
               <div className="p-4">
-                <div className="text-center mb-4">
+                <div className="max-w-md mx-auto w-full">
+                  <div className="text-center mb-4">
                   <div className="text-4xl font-bold mb-2 text-gray-900">
                     ${displayFamiliaTotal.toLocaleString()}
                   </div>
@@ -408,6 +409,7 @@ export function Toolbar({
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
                     <span>-100%</span>
                     <span>+100%</span>
+                  </div>
                   </div>
                 </div>
               </div>
