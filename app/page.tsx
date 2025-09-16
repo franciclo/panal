@@ -33,7 +33,7 @@ export default function Home() {
         id="framed-container"
         ref={containerRef}
         className="relative overflow-hidden w-full h-[100dvh] m-0 bg-transparent border-0 rounded-none shadow-none
-        lg:mx-auto lg:bg-white lg:border lg:border-gray-200 lg:rounded-2xl lg:shadow-sm lg:w-[calc(100%-2rem)] lg:max-w-[1200px] lg:mt-8 lg:mb-8 lg:h-[calc(100dvh-64px)]"
+        lg:mx-auto lg:bg-white lg:border lg:border-gray-200 lg:rounded-2xl lg:shadow-sm lg:w-[calc(100%-2rem)] lg:max-w-[1200px] lg:my-4 lg:mb-4 lg:h-[calc(100dvh-34px)]"
       >
         {/* Hexagonal Grid - fills the framed container */}
         <HexagonCanvas 
