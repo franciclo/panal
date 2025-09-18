@@ -1,47 +1,19 @@
-# Colmena - Visualización de Economía Asociativa Escolar
+# Colmena — economía asociativa escolar
 
-**Colmena** es una aplicación web que visualiza la economía asociativa escolar usando un patrón hexagonal donde cada hexágono representa un aporte individual de las familias.
+Colmena es una herramienta para comunidades que se organizan para financiar su propia escuela. Visualiza el presupuesto común como una colmena de hexágonos y hace simple acordar cuánto aporta cada familia.
 
-## ¿Qué Puedes Hacer con Colmena?
+## Problema → Solución
+- **Problema**: coordinar aportes justos y sostenibles, transparentar becas, donaciones y mora, y ajustar el presupuesto sin perder el equilibrio.
+- **Solución**: una visualización viva y controles simples para explorar el presupuesto y tu aporte mensual viendo el impacto inmediato.
 
-### Visualizar Datos Financieros
-- **Ver el presupuesto total** de la escuela representado como un Colmena de hexágonos
-- **Identificar familias en mora** (hexágonos marrones)
-- **Distinguir tipos de aportes** por colores:
-  - Dorado claro: Becas (aportes reducidos)
-  - Dorado medio: Aportes estándar
-  - Dorado oscuro: Donaciones (aportes adicionales)
-  - Marrón oscuro: Familias en mora
+## ¿Cómo se lee la colmena?
+- **Cada hexágono = un aporte** de una familia.
+- **Colores**: becas (claro), estándar (medio), donaciones (marron), mora (oscuro).
+- **Estadísticas en vivo**: mora, donaciones, becas y balance del mes.
 
-### Consultar Estadísticas
-- **Total de mora**: Suma de aportes adeudados
-- **Donaciones**: Monto adicional recibido por encima del aporte estándar
-- **Becas**: Reducción total otorgada por debajo del aporte estándar
-- **Presupuesto total**: Suma de todos los aportes
+## ¿Qué puedes ajustar?
+- **Presupuesto de la escuela**: explora aumentos en salarios, becas, reservas y mantenimiento con deslizadores.
+- **Tu aporte mensual**: mueve un porcentaje desde −100% a +100% respecto del promedio de tu familia y ve el efecto al instante. Si hay déficit, no se permite bajar del promedio.
 
-### Simular Cambios
-- **Seleccionar una familia** específica
-- **Ajustar el porcentaje** de sus aportes (+/- desde el valor inicial)
-- **Ver el impacto inmediato** en las estadísticas generales
-- **Observar cómo cambian** los totales de mora, donaciones y becas
-
-### Navegar la Interfaz
-- **Canvas hexagonal** que ocupa toda la pantalla
-- **Barra de estadísticas** en la parte superior
-- **Panel de control** en la parte inferior con:
-  - Selector de familia
-  - Deslizador para ajustar porcentajes
-  - Información de aportes actuales vs iniciales
-
-## Datos de Ejemplo
-
-La aplicación simula:
-- **300 familias** contribuyentes
-- **400 aportes** individuales distribuidos entre las familias
-- **40 familias** en mora (seleccionadas aleatoriamente)
-- **Presupuesto base** de $200,000,000
-- **Aportes estándar** de $500,000 por estudiante
-
----
-
-*Colmena: Visualización interactiva de economía asociativa escolar.*
+## Datos de ejemplo
+Incluye datos simulados para visualizar ~300 familias y su distribución de aportes.
