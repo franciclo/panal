@@ -15,12 +15,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Colmena",
-  description: "Control comunal de presupuestos",
-  
-  icons: {
-    icon: "/favicon.svg",
+  metadataBase: new URL('https://colmena.capital'),
+  title: 'Colmena',
+  description: 'Control comunal de presupuestos',
+  openGraph: {
+    title: 'Colmena',
+    description: 'Control comunal de presupuestos',
+    images: '/opengraph-image', // resolved against metadataBase (dynamic image)
   },
+  icons: { icon: '/favicon.svg' },
 };
 
 export const viewport: Viewport = {
