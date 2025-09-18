@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Panal",
-  description: "Visualización de economia asociativa de escuela",
+  title: "Colmena",
+  description: "Control comunal de presupuestos",
   
   icons: {
     icon: "/favicon.svg",

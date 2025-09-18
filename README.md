@@ -1,11 +1,11 @@
-# Panal - Visualización de Economía Asociativa Escolar
+# Colmena - Visualización de Economía Asociativa Escolar
 
-**Panal** es una aplicación web que visualiza la economía asociativa escolar usando un patrón hexagonal donde cada hexágono representa un aporte individual de las familias.
+**Colmena** es una aplicación web que visualiza la economía asociativa escolar usando un patrón hexagonal donde cada hexágono representa un aporte individual de las familias.
 
-## ¿Qué Puedes Hacer con Panal?
+## ¿Qué Puedes Hacer con Colmena?
 
 ### Visualizar Datos Financieros
-- **Ver el presupuesto total** de la escuela representado como un panal de hexágonos
+- **Ver el presupuesto total** de la escuela representado como un Colmena de hexágonos
 - **Identificar familias en mora** (hexágonos marrones)
 - **Distinguir tipos de aportes** por colores:
   - Dorado claro: Becas (aportes reducidos)
@@ -44,4 +44,4 @@ La aplicación simula:
 
 ---
 
-*Panal: Visualización interactiva de economía asociativa escolar.*
+*Colmena: Visualización interactiva de economía asociativa escolar.*
